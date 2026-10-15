@@ -1,0 +1,115 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "sqlite"
+}
+
+// User account and profile information
+model User {
+    id             String           @id @default(uuid())
+    username       String           @unique
+    passwordHash   String
+    avatarUrl      String?
+    height         Float?
+    weight         Float?
+    unitPreference String           @default("imperial")
+    createdAt      DateTime         @default(now())
+    updatedAt      DateTime         @updatedAt
+    exercises      Exercise[]
+    routines       WorkoutRoutine[]
+    workoutEntries WorkoutEntry[]
+}
+
+// Master dictionary of movements (seeded defaults + custom user exercises)
+model Exercise {
+    id               String            @id @default(uuid())
+    name             String
+    category         String
+    equipment        String
+    modality         String            @default("WEIGHT_REPS")
+    isCustom         Boolean           @default(false)
+    isArchived       Boolean           @default(false)
+    userId           String?
+    user             User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+    routineExercises RoutineExercise[]
+    workoutExercises WorkoutExercise[]
+}
+
+// Reusable workout split templates (Push Day A, Upper Hypertrophy, etc.)
+model WorkoutRoutine {
+    id               String            @id @default(uuid())
+    userId           String
+    user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+    name             String
+    splitTag         String?
+    notes            String?
+    isArchived       Boolean           @default(false)
+    createdAt        DateTime          @default(now())
+    updatedAt        DateTime          @updatedAt
+    routineExercises RoutineExercise[]
+    workoutEntries   WorkoutEntry[]
+}
+
+// Exercise configuration and targets inside a workout template
+model RoutineExercise {
+    id           String         @id @default(uuid())
+    routineId    String
+    routine      WorkoutRoutine @relation(fields: [routineId], references: [id], onDelete: Cascade)
+    exerciseId   String
+    exercise     Exercise       @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+    orderIndex   Int
+    targetSets   Int            @default(3)
+    targetValue  String?
+    targetWeight Float?
+    notes        String?
+}
+
+// Daily workout session log (supports multiple entries per day or ad-hoc entries)
+model WorkoutEntry {
+    id               String            @id @default(uuid())
+    userId           String
+    user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+    routineId        String?
+    routine          WorkoutRoutine?   @relation(fields: [routineId], references: [id], onDelete: SetNull)
+    name             String
+    splitTag         String?
+    status           String            @default("IN_PROGRESS")
+    date             DateTime          @default(now())
+    startedAt        DateTime?
+    completedAt      DateTime?
+    durationMinutes  Int?
+    notes            String?
+    createdAt        DateTime          @default(now())
+    workoutExercises WorkoutExercise[]
+}
+
+// Exercise performed during a specific workout session
+model WorkoutExercise {
+    id             String        @id @default(uuid())
+    workoutEntryId String
+    workoutEntry   WorkoutEntry  @relation(fields: [workoutEntryId], references: [id], onDelete: Cascade)
+    exerciseId     String
+    exercise       Exercise      @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+    orderIndex     Int
+    notes          String?
+    sets           ExerciseSet[]
+}
+
+// Granular set log for weight/reps, isometric holds, or distance cardio
+model ExerciseSet {
+    id                String          @id @default(uuid())
+    workoutExerciseId String
+    workoutExercise   WorkoutExercise @relation(fields: [workoutExerciseId], references: [id], onDelete: Cascade)
+    setNumber         Int
+    setType           String          @default("NORMAL")
+    weight            Float?
+    reps              Int?
+    durationSeconds   Int?
+    distance          Float?
+    distanceUnit      String?
+    rpe               Float?
+    isCompleted       Boolean         @default(false)
+    meta              String?
+}

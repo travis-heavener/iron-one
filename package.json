@@ -6,7 +6,11 @@
     "main": "server/server.js",
     "scripts": {
         "start": "node server/server.js",
-        "dev": "node --watch server/server.js"
+        "dev": "node --watch server/server.js",
+        "db:generate": "prisma generate",
+        "db:migrate": "prisma migrate dev",
+        "db:seed": "node server/seeds/seed.js",
+        "db:studio": "prisma studio"
     },
     "keywords": [
         "workout",
@@ -18,8 +22,10 @@
     "author": "Travis Heavener",
     "license": "MIT",
     "dependencies": {
+        "@prisma/adapter-better-sqlite3": "^7.10.0",
         "@prisma/client": "^7.10.0",
         "argon2": "^0.45.1",
+        "better-sqlite3": "^13.0.3",
         "cors": "^2.8.6",
         "dotenv": "^18.0.8",
         "express": "^5.3.0",
