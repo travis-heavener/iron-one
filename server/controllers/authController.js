@@ -49,10 +49,9 @@ export const register = async ( req, res ) => {
 
     try {
         // Verify case-insensitive username uniqueness
-        const existingUsers = await prisma.$queryRawUnsafe(
-            'SELECT id FROM "User" WHERE LOWER(username) = LOWER(?) LIMIT 1;',
-            trimmedUsername
-        );
+        const existingUsers = await prisma.$queryRaw`
+            SELECT id FROM "User" WHERE LOWER(username) = LOWER(${trimmedUsername}) LIMIT 1;
+        `;
 
         if ( existingUsers.length > 0 ) {
             return sendError( res, "Username is already taken", "ERR_USERNAME_TAKEN", 409 );
@@ -119,10 +118,9 @@ export const login = async ( req, res ) => {
 
     try {
         // Lookup user by case-insensitive username match
-        const matchingUsers = await prisma.$queryRawUnsafe(
-            'SELECT * FROM "User" WHERE LOWER(username) = LOWER(?) LIMIT 1;',
-            trimmedUsername
-        );
+        const matchingUsers = await prisma.$queryRaw`
+            SELECT * FROM "User" WHERE LOWER(username) = LOWER(${trimmedUsername}) LIMIT 1;
+        `;
 
         const user = matchingUsers[0];
 

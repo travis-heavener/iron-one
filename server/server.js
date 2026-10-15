@@ -115,4 +115,5 @@ process.on( "SIGINT", () => handleShutdown( "SIGINT" ) );
 process.on( "SIGTERM", () => handleShutdown( "SIGTERM" ) );
 
 export { app, server };
+export default app;
 

@@ -52,11 +52,9 @@ export const updateProfile = async ( req, res ) => {
 
         // Verify case-insensitive username uniqueness
         if ( trimmed.toLowerCase() !== req.user.username.toLowerCase() ) {
-            const existing = await prisma.$queryRawUnsafe(
-                'SELECT id FROM "User" WHERE LOWER(username) = LOWER(?) AND id != ? LIMIT 1;',
-                trimmed,
-                req.user.id
-            );
+            const existing = await prisma.$queryRaw`
+                SELECT id FROM "User" WHERE LOWER(username) = LOWER(${trimmed}) AND id != ${req.user.id} LIMIT 1;
+            `;
 
             if ( existing.length > 0 ) {
                 return sendError( res, "Username is already taken", "ERR_USERNAME_TAKEN", 409 );

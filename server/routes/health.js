@@ -13,7 +13,7 @@ const router = express.Router();
 // Health check endpoint
 router.get( "/", async ( req, res ) => {
     try {
-        await prisma.$queryRawUnsafe( "SELECT 1;" );
+        await prisma.$queryRaw`SELECT 1;`;
 
         return sendSuccess( res, {
             service: "ironone",
