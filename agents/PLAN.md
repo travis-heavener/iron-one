@@ -86,6 +86,7 @@ To avoid confusion, the database is partitioned into four distinct functional do
      - `equipment`: String (e.g., "Barbell", "Dumbbell", "Cable", "Machine", "Bodyweight", "None")
      - `modality`: String (`WEIGHT_REPS`, `TIME_DURATION`, `DISTANCE_TIME`, default `WEIGHT_REPS`)
      - `isCustom`: Boolean (default `false` for global seed movements; `true` for user-created)
+     - `isArchived`: Boolean (default `false`; soft-delete so deleting a custom exercise never corrupts historical logs)
      - `userId`: Nullable Foreign Key to User (null for global library; set if created by a specific user)
 
 ---
@@ -101,6 +102,7 @@ To avoid confusion, the database is partitioned into four distinct functional do
      - `name`: String (e.g., "Push Day A")
      - `splitTag`: String (Nullable, e.g., "Push", "Pull", "Legs", "Cardio" for visual color badges)
      - `notes`: Text (Nullable, overall instructions or focus notes)
+     - `isArchived`: Boolean (default `false`; soft-delete preserves template references)
      - `createdAt`: DateTime
      - `updatedAt`: DateTime
 
@@ -108,8 +110,8 @@ To avoid confusion, the database is partitioned into four distinct functional do
    - **Purpose**: Defines which exercises belong to a `WorkoutRoutine` template and what the target goals are.
    - **Fields**:
      - `id`: String (UUID, Primary Key)
-     - `routineId`: Foreign Key to WorkoutRoutine (Cascade Delete)
-     - `exerciseId`: Foreign Key to Exercise
+     - `routineId`: Foreign Key to WorkoutRoutine (Cascade Delete on routine deletion)
+     - `exerciseId`: Foreign Key to Exercise (Restrict Delete)
      - `orderIndex`: Integer (1, 2, 3... sequence in the routine)
      - `targetSets`: Integer (e.g., 3 sets)
      - `targetValue`: String (Nullable, target guidance, e.g., "8-12 reps", "60 sec hold", "2.0 miles")
@@ -126,7 +128,7 @@ To avoid confusion, the database is partitioned into four distinct functional do
    - **Fields**:
      - `id`: String (UUID, Primary Key)
      - `userId`: Foreign Key to User
-     - `routineId`: Nullable Foreign Key to WorkoutRoutine (points to the template if started from one; **NULL** if spontaneous/ad-hoc)
+     - `routineId`: Nullable Foreign Key to WorkoutRoutine (`onDelete: SetNull`; preserves workout history even if a routine template is removed)
      - `name`: String (e.g., "Push Day A", "Morning 5k", or "Ad-Hoc Arm Blast")
      - `splitTag`: String (Nullable, e.g., "Push", "Cardio")
      - `status`: String (`IN_PROGRESS`, `COMPLETED`, `CANCELED`, default `IN_PROGRESS`)
@@ -143,7 +145,7 @@ To avoid confusion, the database is partitioned into four distinct functional do
    - **Fields**:
      - `id`: String (UUID, Primary Key)
      - `workoutEntryId`: Foreign Key to WorkoutEntry (Cascade Delete)
-     - `exerciseId`: Foreign Key to Exercise
+     - `exerciseId`: Foreign Key to Exercise (Restrict Delete)
      - `orderIndex`: Integer (display order within this session)
      - `notes`: Text (Nullable)
 
@@ -197,9 +199,10 @@ To avoid confusion, the database is partitioned into four distinct functional do
    ```
 
 ### Phase 2: Database Layer & Master Exercise Seeding
-1. Set up database client (Prisma ORM with SQLite or preferred adapter).
-2. Run database migration to generate the tables (`User`, `Exercise`, `WorkoutRoutine`, `RoutineExercise`, `WorkoutEntry`, `WorkoutExercise`, `ExerciseSet`).
-3. Create a seed script (`seed.js`) containing a curated library of standard bodybuilding, powerlifting, calisthenics, and cardio exercises categorized by muscle groups and modality.
+1. Set up database client (Prisma ORM with SQLite).
+2. Configure SQLite with **Write-Ahead Logging (WAL)** mode (`PRAGMA journal_mode = WAL;`) for non-blocking concurrent reads and writes.
+3. Run database migration to generate the tables (`User`, `Exercise`, `WorkoutRoutine`, `RoutineExercise`, `WorkoutEntry`, `WorkoutExercise`, `ExerciseSet`).
+4. Create a seed script (`seed.js`) containing a curated library of standard bodybuilding, powerlifting, calisthenics, and cardio exercises categorized by muscle groups and modality.
 
 ### Phase 3: User Authentication & Profile Service
 1. **Registration & Password Hashing**:
@@ -216,7 +219,7 @@ To avoid confusion, the database is partitioned into four distinct functional do
 ### Phase 4: Exercise Catalog Endpoints
 1. `GET /api/exercises` - Retrieve master exercise catalog + user's custom exercises, searchable by name, muscle group, and modality.
 2. `POST /api/exercises` - Add a new custom exercise for the current user.
-3. `DELETE /api/exercises/:id` - Delete a custom exercise (restricted to owner).
+3. `DELETE /api/exercises/:id` - Soft-delete a custom exercise (`isArchived = true`) to protect historical logs.
 
 ### Phase 5: Workout Engine (Routines & Journal Entries API)
 1. **Workout Routines (Templates)**:
@@ -226,8 +229,9 @@ To avoid confusion, the database is partitioned into four distinct functional do
    - `PUT /api/routines/:id` - Update routine name, exercises, target sets/reps.
    - `POST /api/routines/:id/copy` - Duplicate an existing routine to easily build split variations.
    - `POST /api/routines/:id/start` - Instantiate a new active `WorkoutEntry` from this routine template.
-   - `DELETE /api/routines/:id` - Delete a routine template.
+   - `DELETE /api/routines/:id` - Soft-delete or archive a routine template.
 2. **Workout Entries (Daily Journal Logs)**:
+   - **Single Active Workout Rule**: Enforce that a user only has one `IN_PROGRESS` entry at any given moment. If an active session exists, `POST /api/workout-entries` returns the active workout ID so the frontend can prompt to resume or finish it.
    - `GET /api/workout-entries` - Chronological journal of logged workouts (supports multiple entries per day) with pagination and date filters.
    - `GET /api/workout-entries/calendar` - Aggregate daily workout badges and entry counts for calendar view.
    - `GET /api/workout-entries/active` - Fetch current active `in_progress` workout entry if one exists.
@@ -235,7 +239,7 @@ To avoid confusion, the database is partitioned into four distinct functional do
    - `GET /api/workout-entries/:id` - Get full details of an entry with exercises and sets.
    - `PUT /api/workout-entries/:id` - Update entry metadata (title, date, notes).
    - `POST /api/workout-entries/:id/complete` - Finish active workout, set completion timestamp, calculate duration.
-   - `POST /api/workout-entries/:id/clone` - Clone a past entry to today's date with previous weights/reps for progressive overload.
+   - `POST /api/workout-entries/:id/clone` - Duplicate a past workout into today's session, carrying over past weights and reps as uncompleted baseline targets (`isCompleted = false`) for progressive overload.
    - `DELETE /api/workout-entries/:id` - Delete a workout entry.
 3. **Individual Exercise & Multi-Modal Set Updates**:
    - `POST /api/workout-entries/:id/exercises` - Add an exercise to an active entry.
@@ -265,6 +269,7 @@ To avoid confusion, the database is partitioned into four distinct functional do
      - 1-tap checkbox to mark sets complete.
      - "Swap Exercise" modal (instant search, 1-tap replace).
      - Built-in rest timer with notification/haptic feedback.
+     - **Gym Network Resilience Shield**: Auto-syncs live in-progress draft to `localStorage` so spotty gym cellular connections or phone browser reloads over Tailscale never lose set data.
 5. **Quick Ad-Hoc Logger**:
    - "Start Empty Workout" button for freeform gym sessions without selecting a template.
 6. **Responsive Desktop Layout**:
