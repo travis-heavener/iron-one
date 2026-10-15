@@ -1,3 +1,9 @@
+# Codebase Conventions & Engineering Standards
+
+> **Notice:** This document establishes the strict coding standards, formatting rules, comment conventions, and architectural idioms for the `IronOne` codebase. All contributors and AI agents must adhere to these conventions.
+
+---
+
 * **Commenting and Documentation Conventions**
   * **Casing, Spacing, and Punctuation**
     * Start every comment with an uppercase letter.
