@@ -12,13 +12,16 @@ export const sendSuccess = ( res, data, statusCode = 200 ) => {
 };
 
 // Used to send standard error JSON envelope
-export const sendError = ( res, message, code = "ERR_BAD_REQUEST", statusCode = 400 ) => {
+export const sendError = ( res, message, code = "ERR_BAD_REQUEST", statusCode = 400, details = null ) => {
+    const error = { code, message };
+
+    if ( details !== null && details !== undefined ) {
+        error.details = details;
+    }
+
     return res.status( statusCode ).json({
         success: false,
-        error: {
-            code,
-            message
-        }
+        error
     });
 };
 

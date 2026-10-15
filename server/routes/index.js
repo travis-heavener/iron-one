@@ -10,6 +10,7 @@ import exercisesRouter from "./exercises.js";
 import healthRouter from "./health.js";
 import routinesRouter from "./routines.js";
 import userRouter from "./user.js";
+import workoutEntriesRouter from "./workoutEntries.js";
 
 const apiRouter = express.Router();
 
@@ -19,6 +20,7 @@ apiRouter.use( "/exercises", exercisesRouter );
 apiRouter.use( "/health", healthRouter );
 apiRouter.use( "/routines", routinesRouter );
 apiRouter.use( "/user", userRouter );
+apiRouter.use( "/workout-entries", workoutEntriesRouter );
 
 export default apiRouter;
 
