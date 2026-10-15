@@ -9,7 +9,7 @@ import { sendError, sendSuccess } from "../utils/response.js";
 // Used to add exercise to active workout session
 export const addExerciseToWorkout = async ( req, res ) => {
     const { id: workoutEntryId } = req.params;
-    const { exerciseId, initialSets = 3, notes, targetDuration, targetReps, targetWeight } = req.body || {};
+    const { exerciseId, initialSets, notes, targetDuration, targetReps, targetWeight } = req.body || {};
 
     if ( !workoutEntryId || typeof workoutEntryId !== "string" || workoutEntryId.length > 50 ) {
         return sendError( res, "Workout session not found", "ERR_ENTRY_NOT_FOUND", 404 );
@@ -58,8 +58,14 @@ export const addExerciseToWorkout = async ( req, res ) => {
         // Clean notes if provided
         const cleanedNotes = typeof notes === "string" ? notes.trim().slice( 0, 500 ) || null : null;
 
-        // Parse initial set count (clamped between 1 and 20, default 3)
-        const setCount = Math.max( 1, Math.min( parseInt( initialSets, 10 ) || 3, 20 ) );
+        // Parse initial set count (clamped between 0 and 20, default 3)
+        let setCount = 3;
+        if ( initialSets !== undefined && initialSets !== null ) {
+            const parsedSets = parseInt( initialSets, 10 );
+            if ( !Number.isNaN( parsedSets ) && parsedSets >= 0 && parsedSets <= 20 ) {
+                setCount = parsedSets;
+            }
+        }
 
         // Determine initial set metrics based on exercise modality
         let parsedReps = null;
@@ -85,25 +91,27 @@ export const addExerciseToWorkout = async ( req, res ) => {
                 }
             });
 
-            const setsData = [];
-            for ( let s = 0; s < setCount; ++s ) {
-                setsData.push({
-                    workoutExerciseId: we.id,
-                    setNumber: s + 1,
-                    setType: "NORMAL",
-                    weight: parsedWeight,
-                    reps: parsedReps,
-                    durationSeconds: parsedDuration,
-                    distance: null,
-                    distanceUnit: null,
-                    rpe: null,
-                    isCompleted: false
+            if ( setCount > 0 ) {
+                const setsData = [];
+                for ( let s = 0; s < setCount; ++s ) {
+                    setsData.push({
+                        workoutExerciseId: we.id,
+                        setNumber: s + 1,
+                        setType: "NORMAL",
+                        weight: parsedWeight,
+                        reps: parsedReps,
+                        durationSeconds: parsedDuration,
+                        distance: null,
+                        distanceUnit: null,
+                        rpe: null,
+                        isCompleted: false
+                    });
+                }
+
+                await tx.exerciseSet.createMany({
+                    data: setsData
                 });
             }
-
-            await tx.exerciseSet.createMany({
-                data: setsData
-            });
 
             return await tx.workoutExercise.findUnique({
                 where: { id: we.id },

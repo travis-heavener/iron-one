@@ -265,8 +265,8 @@ export const updateExerciseSet = async ( req, res ) => {
         // Update setNumber
         if ( setNumber !== undefined ) {
             const sn = parseInt( setNumber, 10 );
-            if ( Number.isNaN( sn ) || sn < 1 ) {
-                return sendError( res, "setNumber must be a positive integer", "ERR_INVALID_SET_NUMBER", 400 );
+            if ( Number.isNaN( sn ) || sn < 1 || sn > 100 ) {
+                return sendError( res, "setNumber must be a positive integer <= 100", "ERR_INVALID_SET_NUMBER", 400 );
             }
             updateData.setNumber = sn;
         }

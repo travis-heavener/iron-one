@@ -123,6 +123,7 @@ export const createWorkoutEntry = async ( req, res ) => {
 // Used to start active workout session instantiated from routine template
 export const startRoutineWorkout = async ( req, res ) => {
     const { id } = req.params;
+    const { date } = req.body || {};
 
     if ( !id || typeof id !== "string" || id.length > 50 ) {
         return sendError( res, "Workout routine not found", "ERR_ROUTINE_NOT_FOUND", 404 );
@@ -169,6 +170,13 @@ export const startRoutineWorkout = async ( req, res ) => {
         }
 
         const now = new Date();
+        let workoutDate = now;
+        if ( date ) {
+            const parsedDate = new Date( date );
+            if ( !Number.isNaN( parsedDate.getTime() ) ) {
+                workoutDate = parsedDate;
+            }
+        }
 
         const newEntry = await prisma.$transaction( async ( tx ) => {
             const entry = await tx.workoutEntry.create({
@@ -179,7 +187,7 @@ export const startRoutineWorkout = async ( req, res ) => {
                     splitTag: routine.splitTag,
                     notes: routine.notes,
                     status: "IN_PROGRESS",
-                    date: now,
+                    date: workoutDate,
                     startedAt: now
                 }
             });
@@ -289,8 +297,11 @@ export const getWorkoutEntries = async ( req, res ) => {
             }
         }
         if ( endDate ) {
-            const end = new Date( endDate );
+            let end = new Date( endDate );
             if ( !Number.isNaN( end.getTime() ) ) {
+                if ( typeof endDate === "string" && !endDate.includes( "T" ) ) {
+                    end = new Date( `${endDate}T23:59:59.999Z` );
+                }
                 where.date.lte = end;
             }
         }
@@ -352,14 +363,31 @@ export const getWorkoutEntries = async ( req, res ) => {
 
 // Used to aggregate daily workout badges for calendar view
 export const getCalendarWorkouts = async ( req, res ) => {
-    const { month, year } = req.query;
+    const { endDate: qEndDate, month, startDate: qStartDate, year } = req.query;
 
     const where = {
         userId: req.user.id
     };
 
-    // Filter by year/month if provided (e.g. year=2026, month=10)
-    if ( year ) {
+    // Filter by explicit date range or year/month if provided
+    if ( qStartDate || qEndDate ) {
+        where.date = {};
+        if ( qStartDate ) {
+            const start = new Date( qStartDate );
+            if ( !Number.isNaN( start.getTime() ) ) {
+                where.date.gte = start;
+            }
+        }
+        if ( qEndDate ) {
+            let end = new Date( qEndDate );
+            if ( !Number.isNaN( end.getTime() ) ) {
+                if ( typeof qEndDate === "string" && !qEndDate.includes( "T" ) ) {
+                    end = new Date( `${qEndDate}T23:59:59.999Z` );
+                }
+                where.date.lte = end;
+            }
+        }
+    } else if ( year ) {
         const y = parseInt( year, 10 );
         if ( !Number.isNaN( y ) && y >= 2000 && y <= 2100 ) {
             let startMonth = 0;
@@ -411,6 +439,7 @@ export const getCalendarWorkouts = async ( req, res ) => {
                 name: entry.name,
                 splitTag: entry.splitTag,
                 status: entry.status,
+                date: entry.date,
                 durationMinutes: entry.durationMinutes
             });
         }
@@ -605,7 +634,7 @@ export const completeWorkoutEntry = async ( req, res ) => {
             }
         } else if ( entry.startedAt ) {
             const diffMs = validCompletedAt.getTime() - new Date( entry.startedAt ).getTime();
-            finalDuration = Math.max( 1, Math.round( diffMs / ( 1000 * 60 ) ) );
+            finalDuration = Math.max( 1, Math.min( Math.round( diffMs / ( 1000 * 60 ) ), 1440 ) );
         }
 
         const completedEntry = await prisma.workoutEntry.update({
@@ -638,6 +667,7 @@ export const completeWorkoutEntry = async ( req, res ) => {
 // Used to clone past workout into new active session for progressive overload
 export const cloneWorkoutEntry = async ( req, res ) => {
     const { id } = req.params;
+    const { date } = req.body || {};
 
     if ( !id || typeof id !== "string" || id.length > 50 ) {
         return sendError( res, "Workout entry not found", "ERR_ENTRY_NOT_FOUND", 404 );
@@ -685,6 +715,13 @@ export const cloneWorkoutEntry = async ( req, res ) => {
         }
 
         const now = new Date();
+        let workoutDate = now;
+        if ( date ) {
+            const parsedDate = new Date( date );
+            if ( !Number.isNaN( parsedDate.getTime() ) ) {
+                workoutDate = parsedDate;
+            }
+        }
 
         const clonedEntry = await prisma.$transaction( async ( tx ) => {
             const newEntry = await tx.workoutEntry.create({
@@ -695,7 +732,7 @@ export const cloneWorkoutEntry = async ( req, res ) => {
                     splitTag: sourceEntry.splitTag,
                     notes: sourceEntry.notes,
                     status: "IN_PROGRESS",
-                    date: now,
+                    date: workoutDate,
                     startedAt: now
                 }
             });
