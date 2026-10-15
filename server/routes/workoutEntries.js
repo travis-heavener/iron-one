@@ -16,6 +16,7 @@ import {
     getWorkoutEntryById,
     updateWorkoutEntry
 } from "../controllers/workoutController.js";
+import { addExerciseToWorkout } from "../controllers/workoutExerciseController.js";
 import { authenticateToken } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -34,6 +35,7 @@ router.post( "/", createWorkoutEntry );
 // Individual entry lifecycle routes
 router.get( "/:id", getWorkoutEntryById );
 router.put( "/:id", updateWorkoutEntry );
+router.post( "/:id/exercises", addExerciseToWorkout );
 router.post( "/:id/complete", completeWorkoutEntry );
 router.post( "/:id/clone", cloneWorkoutEntry );
 router.delete( "/:id", deleteWorkoutEntry );
