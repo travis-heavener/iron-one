@@ -39,6 +39,47 @@ This project is also an experiment in pure agentic pair programming—designed a
 
 ---
 
+## Quickstart & Local Setup
+
+### 1. Prerequisites
+- **Node.js** >= 20.x (ESM support)
+- **npm** >= 10.x
+
+### 2. Installation & Environment
+```bash
+# Clone the repository
+git clone https://github.com/travisheavener/IronOne.git
+cd IronOne
+
+# Install dependencies
+npm install
+
+# Configure environment variables
+cp .env.example .env
+```
+
+### 3. Database Initialization
+```bash
+# Run migrations to generate SQLite schema and Prisma client
+npm run db:migrate
+
+# Seed master exercise catalog (55 standard movements)
+npm run db:seed
+```
+
+### 4. Running the Server
+```bash
+# Development mode (file watching enabled)
+npm run dev
+
+# Production mode
+npm start
+```
+
+Verify backend health and database connectivity at `http://localhost:3000/api/health`.
+
+---
+
 ## Project Documentation
 
 Internal agent guidelines and specifications live in the [`agents/`](./agents/) directory:
