@@ -5,12 +5,16 @@
 
 import express from "express";
 
+import authRouter from "./auth.js";
 import healthRouter from "./health.js";
+import userRouter from "./user.js";
 
 const apiRouter = express.Router();
 
-// Mount system routes
+// Mount domain routes
+apiRouter.use( "/auth", authRouter );
 apiRouter.use( "/health", healthRouter );
+apiRouter.use( "/user", userRouter );
 
 export default apiRouter;
 

@@ -65,10 +65,11 @@ app.use( ( err, req, res, next ) => {
 
     const statusCode = err.status || 500;
     const message = err.message || "Internal server error";
+    const errorCode = err.code || ( statusCode === 400 ? "ERR_BAD_REQUEST" : "ERR_INTERNAL_SERVER" );
 
     console.error( "[Server Error]", err );
 
-    return sendError( res, message, err.code || "ERR_INTERNAL_SERVER", statusCode );
+    return sendError( res, message, errorCode, statusCode );
 });
 
 /******************************************************************************
