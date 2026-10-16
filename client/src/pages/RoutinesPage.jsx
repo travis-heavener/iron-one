@@ -19,7 +19,7 @@ import {
     Trash2,
     X
 } from "lucide-react";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { exerciseApi, routineApi } from "../api/client.js";
@@ -75,6 +75,10 @@ export const RoutinesPage = ({ onNavigate }) => {
     const [ formExercises, setFormExercises ] = useState( [] );
     const [ saving, setSaving ] = useState( false );
     const [ editorError, setEditorError ] = useState( "" );
+    const [ nameError, setNameError ] = useState( "" );
+
+    const nameInputRef = useRef( null );
+    const editorScrollRef = useRef( null );
 
     // Exercise Picker Modal State (Inside Editor)
     const [ isPickerOpen, setIsPickerOpen ] = useState( false );
@@ -220,6 +224,7 @@ export const RoutinesPage = ({ onNavigate }) => {
         setFormNotes( "" );
         setFormExercises( [] );
         setEditorError( "" );
+        setNameError( "" );
         setIsEditorOpen( true );
     };
 
@@ -230,18 +235,27 @@ export const RoutinesPage = ({ onNavigate }) => {
         setFormSplitTag( routine.splitTag || "Push" );
         setFormNotes( routine.notes || "" );
         setFormExercises(
-            ( routine.routineExercises || [] ).map( ( re ) => ({
-                exerciseId: re.exerciseId,
-                name: re.exercise?.name || "Exercise",
-                category: re.exercise?.category || "General",
-                modality: re.exercise?.modality || "WEIGHT_REPS",
-                targetSets: re.targetSets ?? 3,
-                targetValue: re.targetValue ?? "8-10",
-                targetWeight: re.targetWeight ?? "",
-                notes: re.notes ?? ""
-            }) )
+            ( routine.routineExercises || [] ).map( ( re ) => {
+                const isWeightReps = ( re.exercise?.modality || "WEIGHT_REPS" ) === "WEIGHT_REPS";
+                let initialTargetVal = re.targetValue ?? ( isWeightReps ? 10 : "60s" );
+                if ( isWeightReps ) {
+                    const parsed = parseInt( initialTargetVal, 10 );
+                    initialTargetVal = Number.isInteger( parsed ) && parsed > 0 ? parsed : 10;
+                }
+                return {
+                    exerciseId: re.exerciseId,
+                    name: re.exercise?.name || "Exercise",
+                    category: re.exercise?.category || "General",
+                    modality: re.exercise?.modality || "WEIGHT_REPS",
+                    targetSets: re.targetSets && re.targetSets > 0 ? re.targetSets : 3,
+                    targetValue: initialTargetVal,
+                    targetWeight: re.targetWeight ?? "",
+                    notes: re.notes ?? ""
+                };
+            } )
         );
         setEditorError( "" );
+        setNameError( "" );
         setIsEditorOpen( true );
     };
 
@@ -274,7 +288,7 @@ export const RoutinesPage = ({ onNavigate }) => {
                 category: ex.category,
                 modality: ex.modality,
                 targetSets: ex.modality === "DISTANCE_TIME" ? 1 : 3,
-                targetValue: ex.modality === "TIME_DURATION" ? "60s" : ex.modality === "DISTANCE_TIME" ? "5 km" : "8-10",
+                targetValue: ex.modality === "TIME_DURATION" ? "60s" : ex.modality === "DISTANCE_TIME" ? "5 km" : 10,
                 targetWeight: "",
                 notes: ""
             }
@@ -310,18 +324,77 @@ export const RoutinesPage = ({ onNavigate }) => {
 
     // Submit Routine Form (Create or Update)
     const handleSaveRoutine = async ( e ) => {
-        e.preventDefault();
+        if ( e ) e.preventDefault();
         setEditorError( "" );
+        setNameError( "" );
 
         const trimmedName = formName.trim();
+        if ( !trimmedName ) {
+            const msg = "Routine name is required";
+            setNameError( msg );
+            setEditorError( msg );
+            nameInputRef.current?.focus();
+            editorScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+            return;
+        }
+
         if ( trimmedName.length < 2 || trimmedName.length > 50 ) {
-            setEditorError( "Routine name must be between 2 and 50 characters" );
+            const msg = "Routine name must be between 2 and 50 characters";
+            setNameError( msg );
+            setEditorError( msg );
+            nameInputRef.current?.focus();
+            editorScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
             return;
         }
 
         if ( formExercises.length === 0 ) {
-            setEditorError( "Please add at least one exercise to this workout routine" );
+            const msg = "Please add at least one exercise to this workout routine";
+            setEditorError( msg );
+            await modal.alert({
+                title: "No Exercises Added",
+                message: msg,
+                variant: "warning"
+            });
             return;
+        }
+
+        // Validate sets and reps (> 0) for each exercise item
+        for ( let i = 0; i < formExercises.length; ++i ) {
+            const item = formExercises[i];
+            const setsNum = parseInt( item.targetSets, 10 );
+            if ( Number.isNaN( setsNum ) || setsNum < 1 || setsNum > 50 ) {
+                const msg = `Exercise #${i + 1} (${item.name}): Target sets must be a positive integer greater than 0 (1–50)`;
+                setEditorError( msg );
+                await modal.alert({
+                    title: "Invalid Target Sets",
+                    message: msg,
+                    variant: "warning"
+                });
+                return;
+            }
+
+            if ( item.modality === "WEIGHT_REPS" ) {
+                const repsNum = parseInt( item.targetValue, 10 );
+                if ( Number.isNaN( repsNum ) || repsNum < 1 || repsNum > 500 ) {
+                    const msg = `Exercise #${i + 1} (${item.name}): Target reps must be a positive number greater than 0 (e.g. 8, 10, 12)`;
+                    setEditorError( msg );
+                    await modal.alert({
+                        title: "Invalid Target Reps",
+                        message: msg,
+                        variant: "warning"
+                    });
+                    return;
+                }
+            } else if ( !item.targetValue || String( item.targetValue ).trim() === "" ) {
+                const msg = `Exercise #${i + 1} (${item.name}): Target metric is required`;
+                setEditorError( msg );
+                await modal.alert({
+                    title: "Missing Target Metric",
+                    message: msg,
+                    variant: "warning"
+                });
+                return;
+            }
         }
 
         setSaving( true );
@@ -333,7 +406,7 @@ export const RoutinesPage = ({ onNavigate }) => {
                 exerciseId: item.exerciseId,
                 orderIndex: idx,
                 targetSets: parseInt( item.targetSets, 10 ) || 3,
-                targetValue: item.targetValue ? String( item.targetValue ).trim() : null,
+                targetValue: item.targetValue !== "" && item.targetValue !== null ? String( item.targetValue ).trim() : null,
                 targetWeight: item.targetWeight !== "" && !isNaN( Number( item.targetWeight ) ) ? Number( item.targetWeight ) : null,
                 notes: item.notes ? String( item.notes ).trim() : null
             }) )
@@ -611,27 +684,57 @@ export const RoutinesPage = ({ onNavigate }) => {
                         </div>
 
                         {editorError && (
-                            <div className="p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold shrink-0">
-                                {editorError}
+                            <div className="p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold shrink-0 flex items-center space-x-2">
+                                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                                <span>{editorError}</span>
                             </div>
                         )}
 
                         {/* Editor Form Body (Scrollable) */}
-                        <form id="routine-editor-form" onSubmit={handleSaveRoutine} className="flex-1 overflow-y-auto space-y-5 pr-1">
+                        <form
+                            id="routine-editor-form"
+                            ref={editorScrollRef}
+                            noValidate
+                            onSubmit={handleSaveRoutine}
+                            className="flex-1 overflow-y-auto space-y-5 pr-1"
+                        >
                             {/* Routine Name & Split Tag */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-                                        Routine Name *
-                                    </label>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                                            Routine Name *
+                                        </label>
+                                        {nameError && (
+                                            <span className="text-[11px] font-semibold text-rose-400">
+                                                Required
+                                            </span>
+                                        )}
+                                    </div>
                                     <input
+                                        ref={nameInputRef}
                                         type="text"
-                                        required
                                         value={formName}
-                                        onChange={( e ) => setFormName( e.target.value )}
+                                        onChange={( e ) => {
+                                            setFormName( e.target.value );
+                                            if ( nameError && e.target.value.trim().length >= 2 ) {
+                                                setNameError( "" );
+                                                setEditorError( "" );
+                                            }
+                                        }}
                                         placeholder="e.g. Push Day A, Heavy Upper Split"
-                                        className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition"
+                                        className={`w-full px-4 py-2.5 rounded-xl bg-slate-950 text-slate-100 placeholder-slate-500 text-sm focus:outline-none transition ${
+                                            nameError
+                                                ? "border-2 border-rose-500 ring-2 ring-rose-500/30 bg-rose-950/20"
+                                                : "border border-slate-800 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
+                                        }`}
                                     />
+                                    {nameError && (
+                                        <p className="mt-1.5 text-xs text-rose-400 font-medium flex items-center space-x-1 animate-fadeIn">
+                                            <AlertCircle className="w-3.5 h-3.5 mr-1 shrink-0 inline text-rose-400" />
+                                            <span>{nameError}</span>
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div>
@@ -771,38 +874,55 @@ export const RoutinesPage = ({ onNavigate }) => {
                                                 {item.modality === "WEIGHT_REPS" ? (
                                                     <div className="grid grid-cols-3 gap-2.5">
                                                         <div>
-                                                            <label className="block text-[10px] font-semibold text-slate-400 mb-1 uppercase">
-                                                                Target Sets
+                                                            <label className="block text-[10px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">
+                                                                Target Sets *
                                                             </label>
                                                             <input
                                                                 type="number"
                                                                 min={1}
                                                                 max={20}
+                                                                step={1}
                                                                 value={item.targetSets}
                                                                 onChange={( e ) => handleUpdateFormExercise( index, "targetSets", e.target.value )}
+                                                                onBlur={( e ) => {
+                                                                    const parsed = parseInt( e.target.value, 10 );
+                                                                    if ( isNaN( parsed ) || parsed < 1 ) {
+                                                                        handleUpdateFormExercise( index, "targetSets", 3 );
+                                                                    }
+                                                                }}
                                                                 className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white text-xs font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
                                                             />
                                                         </div>
 
                                                         <div>
-                                                            <label className="block text-[10px] font-semibold text-slate-400 mb-1 uppercase">
-                                                                Target Reps
+                                                            <label className="block text-[10px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">
+                                                                Target Reps *
                                                             </label>
                                                             <input
-                                                                type="text"
+                                                                type="number"
+                                                                min={1}
+                                                                max={100}
+                                                                step={1}
                                                                 value={item.targetValue}
                                                                 onChange={( e ) => handleUpdateFormExercise( index, "targetValue", e.target.value )}
-                                                                placeholder="e.g. 8-10"
+                                                                onBlur={( e ) => {
+                                                                    const parsed = parseInt( e.target.value, 10 );
+                                                                    if ( isNaN( parsed ) || parsed < 1 ) {
+                                                                        handleUpdateFormExercise( index, "targetValue", 10 );
+                                                                    }
+                                                                }}
+                                                                placeholder="10"
                                                                 className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white text-xs font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
                                                             />
                                                         </div>
 
                                                         <div>
-                                                            <label className="block text-[10px] font-semibold text-slate-400 mb-1 uppercase">
+                                                            <label className="block text-[10px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">
                                                                 Target Weight
                                                             </label>
                                                             <input
                                                                 type="number"
+                                                                min={0}
                                                                 step="0.5"
                                                                 value={item.targetWeight}
                                                                 onChange={( e ) => handleUpdateFormExercise( index, "targetWeight", e.target.value )}
@@ -814,28 +934,35 @@ export const RoutinesPage = ({ onNavigate }) => {
                                                 ) : item.modality === "TIME_DURATION" ? (
                                                     <div className="grid grid-cols-2 gap-2.5">
                                                         <div>
-                                                            <label className="block text-[10px] font-semibold text-slate-400 mb-1 uppercase">
-                                                                Target Sets / Rounds
+                                                            <label className="block text-[10px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">
+                                                                Target Sets / Rounds *
                                                             </label>
                                                             <input
                                                                 type="number"
                                                                 min={1}
                                                                 max={20}
+                                                                step={1}
                                                                 value={item.targetSets}
                                                                 onChange={( e ) => handleUpdateFormExercise( index, "targetSets", e.target.value )}
+                                                                onBlur={( e ) => {
+                                                                    const parsed = parseInt( e.target.value, 10 );
+                                                                    if ( isNaN( parsed ) || parsed < 1 ) {
+                                                                        handleUpdateFormExercise( index, "targetSets", 3 );
+                                                                    }
+                                                                }}
                                                                 className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white text-xs font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
                                                             />
                                                         </div>
 
                                                         <div>
-                                                            <label className="block text-[10px] font-semibold text-slate-400 mb-1 uppercase">
-                                                                Target Duration
+                                                            <label className="block text-[10px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">
+                                                                Target Duration *
                                                             </label>
                                                             <input
                                                                 type="text"
                                                                 value={item.targetValue}
                                                                 onChange={( e ) => handleUpdateFormExercise( index, "targetValue", e.target.value )}
-                                                                placeholder="e.g. 60s or 45s"
+                                                                placeholder="e.g. 60s or 5m"
                                                                 className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white text-xs font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
                                                             />
                                                         </div>
@@ -843,22 +970,29 @@ export const RoutinesPage = ({ onNavigate }) => {
                                                 ) : (
                                                     <div className="grid grid-cols-2 gap-2.5">
                                                         <div>
-                                                            <label className="block text-[10px] font-semibold text-slate-400 mb-1 uppercase">
-                                                                Target Sets / Intervals
+                                                            <label className="block text-[10px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">
+                                                                Target Sets / Intervals *
                                                             </label>
                                                             <input
                                                                 type="number"
                                                                 min={1}
                                                                 max={20}
+                                                                step={1}
                                                                 value={item.targetSets}
                                                                 onChange={( e ) => handleUpdateFormExercise( index, "targetSets", e.target.value )}
+                                                                onBlur={( e ) => {
+                                                                    const parsed = parseInt( e.target.value, 10 );
+                                                                    if ( isNaN( parsed ) || parsed < 1 ) {
+                                                                        handleUpdateFormExercise( index, "targetSets", 1 );
+                                                                    }
+                                                                }}
                                                                 className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white text-xs font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
                                                             />
                                                         </div>
 
                                                         <div>
-                                                            <label className="block text-[10px] font-semibold text-slate-400 mb-1 uppercase">
-                                                                Target Distance or Time
+                                                            <label className="block text-[10px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">
+                                                                Target Distance or Time *
                                                             </label>
                                                             <input
                                                                 type="text"

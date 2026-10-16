@@ -265,13 +265,15 @@ To avoid confusion, the database is partitioned into four distinct functional do
   - **Routine Blueprint Manager (`client/src/pages/RoutinesPage.jsx`)**: Visual routine list with split badges, exercise counts, and 1-tap "Start Workout" launcher (`POST /api/routines/:id/start`).
   - **1-Tap Duplication**: "Copy Routine" action (`POST /api/routines/:id/copy`) for rapid split variation cloning.
   - **Visual Routine Editor**: Complete modal editor to build split blueprints, reorder exercises, set target sets/reps/weights, and pick movements from a searchable catalog modal.
-- [ ] **Sub-Phase 6C: Active Workout Logger (Frictionless Gym UI)**:
-  - Multi-modal set rows with big touch targets and step increment chips (`+5lb`, `+2.5lb`, `+1 rep`, `-1 rep`).
-  - Time holds & distance/time cardio logger.
-  - 1-tap checkbox to mark sets complete.
-  - Exercise Hot-Swap modal (`POST /api/workout-exercises/:id/swap`) with search and keep/reset sets toggle.
-  - Built-in rest timer with countdown and audio/haptic feedback.
-  - Gym Network Resilience Shield: Auto-sync in-progress workout draft to `localStorage` for offline protection over Tailscale.
+- [x] **Sub-Phase 6C: Active Workout Logger (Frictionless Gym UI) (Completed)**:
+  - **Tactile Multi-Modal Set Rows (`client/src/pages/ActiveWorkoutPage.jsx`)**: High-speed touch targets for Weight and Reps with micro-steppers (`+5lb`/`+2.5lb`, `-5lb`/`-2.5lb`, `+1 rep`, `-1 rep`) adaptive to imperial/metric preferences.
+  - **1-Tap Set Cycling**: Set number badges cycle seamlessly between `NORMAL`, `WARMUP` (`W`), `DROP` (`D`), and `FAILURE` (`F`).
+  - **Time Holds & Cardio Support**: Dedicated inputs and step adjusters for isometric holds (seconds) and distance cardio (distance + duration).
+  - **1-Tap Set Completion & Auto-Audio**: Immediate optimistic checkmark with synthesized Web Audio API chime (`playSetDoneTone`) and haptic vibration trigger.
+  - **Floating Gym Rest Timer (`client/src/components/RestTimer.jsx`)**: Auto-launches upon set completion with presets (`30s`, `60s`, `90s`, `120s`, `180s`), visual countdown bar, completion alarm, and minimization pill dock.
+  - **Exercise Hot-Swap Modal (`POST /api/workout-exercises/:id/swap`)**: In-session exercise substitution with searchable catalog and keep/reset sets toggle.
+  - **Gym Network Resilience Shield (`client/src/utils/offlineSync.js`)**: Real-time `localStorage` draft caching (`ironone_active_workout_draft`) and offline status warning banner protecting workouts from basement Wi-Fi/Tailscale disconnects.
+  - **Workout Completion Confetti Celebration (`client/src/utils/confetti.js`)**: Multi-stage `canvas-confetti` particle blast (center explosion, side perimeter cannons, shimmer sparkle shower) and victory haptics upon completing a workout.
 - [ ] **Sub-Phase 6D: Calendar View & Journal Feed**:
   - Month/week calendar grid with daily workout badges (supporting multiple sessions per date).
   - Chronological journal stream with date range filtering and "Clone to Today" progressive overload carryover.
