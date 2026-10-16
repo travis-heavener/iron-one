@@ -3,6 +3,8 @@
  * System diagnostic and Tailscale connectivity verification
  ******************************************************************************/
 
+import os from "node:os";
+
 import express from "express";
 
 import prisma from "../models/db.js";
@@ -19,6 +21,7 @@ router.get( "/", async ( req, res ) => {
             service: "ironone",
             status: "healthy",
             database: "connected",
+            hostname: os.hostname(),
             uptime: Math.floor( process.uptime() ),
             timestamp: new Date().toISOString()
         });

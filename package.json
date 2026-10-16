@@ -7,6 +7,10 @@
     "scripts": {
         "start": "node server/server.js",
         "dev": "node --watch server/server.js",
+        "build": "npm --prefix client run build",
+        "client:install": "npm --prefix client install",
+        "client:dev": "npm --prefix client run dev",
+        "client:build": "npm --prefix client run build",
         "db:generate": "prisma generate",
         "db:migrate": "prisma migrate dev",
         "db:seed": "node server/seeds/seed.js",

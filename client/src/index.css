@@ -1,0 +1,79 @@
+/******************************************************************************
+ * Global Stylesheet
+ * Tailwind CSS imports, root themes, and tactile gym mobile utilities
+ ******************************************************************************/
+
+@import "tailwindcss";
+
+@layer base {
+    :root {
+        --color-background: #090d16;
+        --color-card: #0f172a;
+        --color-border: #1e293b;
+        --color-primary: #10b981;
+        --safe-area-bottom: min(env(safe-area-inset-bottom, 0px), 34px);
+    }
+
+    /* Firefox on mobile (Gecko) does not require bottom safe area insets */
+    @supports (-moz-appearance: none) {
+        :root {
+            --safe-area-bottom: 0px;
+        }
+    }
+
+    * {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        height: 100dvh;
+        overflow: hidden;
+        background-color: #090d16;
+        color: #f8fafc;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        overscroll-behavior-y: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #root {
+        width: 100%;
+        height: 100%;
+        height: 100dvh;
+        overflow: hidden;
+    }
+
+    /* Hardware-accelerated and stable mobile bottom nav dock */
+    .mobile-nav-dock {
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        will-change: transform;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        touch-action: manipulation;
+    }
+
+    /* Number input spin buttons removal for clean step buttons */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type="number"] {
+        -moz-appearance: textfield;
+    }
+
+    /* Enforce desktop pointer cursor on all interactive elements */
+    button, [role="button"], a, input[type="checkbox"], input[type="radio"], select {
+        cursor: pointer;
+    }
+
+    button:disabled, [role="button"]:disabled, input:disabled {
+        cursor: not-allowed;
+    }
+}
+

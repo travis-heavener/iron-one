@@ -296,6 +296,8 @@ To avoid confusion, the database is partitioned into four distinct functional do
    - Monthly consistency and volume progression streaks.
 4. **Interactive Progression Visualizer**:
    - Interactive flow visualizer charting progression curves between workout splits.
+5. **Password Reset & Account Recovery**:
+   - Secure self-hosted account recovery flow (CLI token generation on home server, Magic Link, or security recovery key).
 
 ---
 

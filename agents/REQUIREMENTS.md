@@ -128,3 +128,5 @@ While the initial releases prioritize private, zero-friction individual logging,
   - Opt-in monthly consistency tracking (e.g., total workouts completed this month, volume progression) to foster friendly accountability without vanity metrics.
 - **FR-SOC-5: Interactive Progression Visualizer**:
   - Interactive flowchart/graph showing progression and flow between different workout routines across training blocks.
+- **FR-AUTH-4: Password Reset & Account Recovery (Planned)**:
+  - Secure password reset flow (e.g. CLI recovery token on server, email link, or emergency security key) for self-hosted account recovery.

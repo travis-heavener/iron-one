@@ -7,6 +7,7 @@ import cors from "cors";
 import "dotenv/config";
 import express from "express";
 import helmet from "helmet";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -28,13 +29,19 @@ const host = process.env.HOST || "0.0.0.0";
  * Middleware Configuration
  ******************************************************************************/
 
-// Set security HTTP headers
+// Set security HTTP headers compatible w/ Tailscale private network
 app.use( helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" }
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginOpenerPolicy: false,
+    originAgentCluster: false,
+    contentSecurityPolicy: false
 }) );
 
-// Enable cross-origin resource sharing for SPA clients
-app.use( cors() );
+// Enable cross-origin resource sharing for SPA clients across localhost and Tailscale
+app.use( cors({
+    origin: true,
+    credentials: true
+}) );
 
 // Parse incoming JSON and URL-encoded payloads
 app.use( express.json({ limit: "10mb" }) );
@@ -49,6 +56,20 @@ app.use( "/uploads", express.static( path.join( rootDir, "uploads" ) ) );
 
 // Mount master API router
 app.use( "/api", apiRouter );
+
+// Serve static client SPA if built in client/dist
+const clientDistDir = path.join( rootDir, "client", "dist" );
+if ( fs.existsSync( clientDistDir ) ) {
+    app.use( express.static( clientDistDir ) );
+
+    // SPA client-side routing fallback for non-API GET requests
+    app.use( ( req, res, next ) => {
+        if ( req.method === "GET" && !req.path.startsWith( "/api" ) && !req.path.startsWith( "/uploads" ) ) {
+            return res.sendFile( path.join( clientDistDir, "index.html" ) );
+        }
+        return next();
+    });
+}
 
 /******************************************************************************
  * Error Handling Middleware

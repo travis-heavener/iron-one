@@ -31,52 +31,126 @@ This project is also an experiment in pure agentic pair programming—designed a
 
 | Layer | Technology |
 | :--- | :--- |
-| **Backend** | Node.js, Express.js (ESM), Multer, Argon2id, JWT |
+| **Backend** | Node.js (ESM), Express.js, Multer, Argon2id, JWT |
 | **Database** | SQLite with Prisma ORM (WAL mode enabled) |
-| **Frontend** | React, Vite, Tailwind CSS (Mobile-First SPA) |
+| **Frontend** | React 19, Vite, Tailwind CSS v4 (Mobile-First SPA, Client-Side Rendered) |
 | **Networking** | Tailscale Mesh VPN (Private remote access) |
-| **Host** | Ubuntu 26 LTS (*"mini-one"*) |
+| **Target Host** | Linux / Ubuntu (or any Node.js host) |
 
 ---
 
-## Quickstart & Local Setup
+## Quickstart: Clone, Init, Build & Run
 
 ### 1. Prerequisites
-- **Node.js** >= 20.x (ESM support)
+- **Node.js** >= 20.x (ESM support; Node v22+ or v25 recommended)
 - **npm** >= 10.x
+- **Git**
+- **Tailscale** *(optional, for secure private remote access)*
 
-### 2. Installation & Environment
+### 2. Clone the Repository
 ```bash
-# Clone the repository
 git clone https://github.com/travisheavener/IronOne.git
 cd IronOne
+```
 
-# Install dependencies
+### 3. Install Dependencies
+Install dependencies for both the backend server and the client SPA:
+```bash
+# Install root (backend) dependencies
 npm install
 
-# Configure environment variables
+# Install client (frontend) dependencies
+npm run client:install
+```
+
+### 4. Configure Environment
+Copy the example environment configuration:
+```bash
 cp .env.example .env
 ```
 
-### 3. Database Initialization
+Open `.env` and configure your settings. In particular, generate a strong random secret for `JWT_SECRET`:
 ```bash
-# Run migrations to generate SQLite schema and Prisma client
+# Generate a secure 64-character hex secret
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+```env
+PORT=3000
+HOST=0.0.0.0
+NODE_ENV=production
+JWT_SECRET=your_generated_secret_here
+JWT_EXPIRES_IN=7d
+DATABASE_URL="file:./ironone.db"
+```
+
+### 5. Initialize the Database
+Run Prisma migrations to create the SQLite database schema with WAL mode enabled, then seed the master exercise catalog (55 standard movements across all modalities):
+```bash
+# Apply schema migrations
 npm run db:migrate
 
-# Seed master exercise catalog (55 standard movements)
+# Seed the master exercise catalog
 npm run db:seed
 ```
 
-### 4. Running the Server
+### 6. Build the Application
+Compile the React 19 / Tailwind CSS frontend into static production assets:
 ```bash
-# Development mode (file watching enabled)
-npm run dev
+npm run build
+```
+*(The backend runs natively as Node.js ES Modules and requires no compilation step).*
 
-# Production mode
+### 7. Run in Production
+Launch the unified server (serves the REST API and the compiled client SPA from port `3000`):
+```bash
 npm start
 ```
+Verify the server and database status by hitting the health check:
+```bash
+curl http://localhost:3000/api/health
+# {"status":"ok","database":"connected","timestamp":"..."}
+```
 
-Verify backend health and database connectivity at `http://localhost:3000/api/health`.
+---
+
+## Development Workflow
+
+When actively developing or adding features:
+
+| Command | Action |
+| :--- | :--- |
+| `npm run dev` | Runs backend in auto-reload watch mode (`node --watch server/server.js`) |
+| `npm run client:dev` | Runs Vite frontend with instant Hot Module Replacement (HMR) on port `5173` |
+| `npm run client:install`| Installs frontend dependencies inside `client/` |
+| `npm run build` | Compiles frontend production bundle into `client/dist/` |
+| `npm run db:migrate` | Applies Prisma migrations to `ironone.db` |
+| `npm run db:generate` | Regenerates Prisma client bindings if `schema.prisma` is modified |
+| `npm run db:seed` | Populates database with default exercise movements |
+| `npm run db:studio` | Launches visual Prisma Studio GUI on port `5555` to inspect data |
+
+---
+
+## Remote Access & Data Management
+
+### Remote Access via Tailscale
+IronOne is engineered to run seamlessly across private Tailscale mesh networks:
+1. Ensure Tailscale is running on your host machine:
+   ```bash
+   tailscale status
+   tailscale ip -4
+   ```
+2. Because `HOST=0.0.0.0` is configured in `.env`, IronOne binds to all network interfaces, including your Tailscale address (`100.x.y.z`).
+3. From any client device (phone, tablet, laptop) connected to the same Tailnet, open:
+   ```text
+   http://<tailscale-ip-or-magicdns>:3000
+   ```
+*(Security headers are pre-configured to allow Tailscale HTTP access without `Cross-Origin-Opener-Policy` restrictions).*
+
+### Automated Database Backups
+Because IronOne uses SQLite with WAL mode enabled, making automated backups is as simple as copying the database file or using SQLite's native `.backup` command:
+```bash
+sqlite3 prisma/ironone.db ".backup 'backups/ironone_$(date +%Y%m%d).db'"
+```
 
 ---
 
