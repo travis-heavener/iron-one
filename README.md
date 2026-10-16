@@ -84,9 +84,9 @@ DATABASE_URL="file:./ironone.db"
 ```
 
 ### 5. Initialize the Database
-Run Prisma migrations to create the SQLite database schema with WAL mode enabled, then seed the master exercise catalog (55 standard movements across all modalities):
+Run Prisma migrations to create the SQLite database schema with WAL mode enabled, generate the Prisma client bindings, and seed the master exercise catalog (57 standard movements across all modalities):
 ```bash
-# Apply schema migrations
+# Apply schema migrations and generate Prisma client
 npm run db:migrate
 
 # Seed the master exercise catalog
