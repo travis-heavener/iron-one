@@ -14,10 +14,12 @@ import React, { useEffect, useState } from "react";
 
 import { systemApi, workoutApi } from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useModal } from "../context/ModalContext.jsx";
 
 // Used to render main dashboard overview and quick actions
 export const DashboardPage = ({ onNavigate }) => {
     const { activeWorkout, refreshActiveWorkout, setActiveWorkout, user } = useAuth();
+    const modal = useModal();
     const [ startingAdHoc, setStartingAdHoc ] = useState( false );
     const [ recentWorkouts, setRecentWorkouts ] = useState( [] );
     const [ loadingRecent, setLoadingRecent ] = useState( true );
@@ -70,7 +72,11 @@ export const DashboardPage = ({ onNavigate }) => {
                 await refreshActiveWorkout();
                 onNavigate( "active" );
             } else {
-                alert( err.message || "Failed to start workout" );
+                await modal.alert({
+                    title: "Unable to Start Workout",
+                    message: err.message || "Failed to start workout session",
+                    variant: "danger"
+                });
             }
         } finally {
             setStartingAdHoc( false );

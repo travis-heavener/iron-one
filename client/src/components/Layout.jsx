@@ -24,9 +24,11 @@ export const Layout = ({ activeTab, children, onSelectTab }) => {
                 </div>
             )}
 
-            {/* Main view container w/ isolated smooth scrolling */}
-            <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-6 pt-4 pb-28 md:pb-12 overflow-y-auto overscroll-contain">
-                {children}
+            {/* Main view container w/ full-width scrollbar aligned to window edge */}
+            <main className="flex-1 w-full overflow-y-auto overscroll-y-contain">
+                <div className="w-full max-w-7xl mx-auto px-4 md:px-6 pt-4 pb-28 md:pb-12">
+                    {children}
+                </div>
             </main>
         </div>
     );

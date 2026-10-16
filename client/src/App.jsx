@@ -8,6 +8,7 @@ import React, { useEffect, useState } from "react";
 
 import { Layout } from "./components/Layout.jsx";
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
+import { ModalProvider } from "./context/ModalContext.jsx";
 import { ActiveWorkoutPage } from "./pages/ActiveWorkoutPage.jsx";
 import { DashboardPage } from "./pages/DashboardPage.jsx";
 import { ExercisesPage } from "./pages/ExercisesPage.jsx";
@@ -115,7 +116,9 @@ const AppContent = () => {
 export const App = () => {
     return (
         <AuthProvider>
-            <AppContent />
+            <ModalProvider>
+                <AppContent />
+            </ModalProvider>
         </AuthProvider>
     );
 };

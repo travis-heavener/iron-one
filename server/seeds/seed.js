@@ -70,8 +70,10 @@ const defaultExercises = [
     { name: "Hollow Body Hold", category: "Core", equipment: "Bodyweight", modality: "TIME_DURATION" },
 
     // Cardio & Conditioning
-    { name: "Outdoor Running", category: "Cardio", equipment: "None", modality: "DISTANCE_TIME" },
-    { name: "Treadmill Running", category: "Cardio", equipment: "Machine", modality: "DISTANCE_TIME" },
+    { name: "Outdoor Running (Distance)", category: "Cardio", equipment: "None", modality: "DISTANCE_TIME" },
+    { name: "Outdoor Running (Time)", category: "Cardio", equipment: "None", modality: "TIME_DURATION" },
+    { name: "Treadmill Running (Distance)", category: "Cardio", equipment: "Machine", modality: "DISTANCE_TIME" },
+    { name: "Treadmill Running (Time)", category: "Cardio", equipment: "Machine", modality: "TIME_DURATION" },
     { name: "Rowing Machine", category: "Cardio", equipment: "Machine", modality: "DISTANCE_TIME" },
     { name: "Stationary Bike", category: "Cardio", equipment: "Machine", modality: "DISTANCE_TIME" },
     { name: "Jump Rope", category: "Cardio", equipment: "Bodyweight", modality: "TIME_DURATION" }

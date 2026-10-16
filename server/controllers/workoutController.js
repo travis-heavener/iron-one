@@ -205,17 +205,42 @@ export const startRoutineWorkout = async ( req, res ) => {
                     }
                 });
 
-                // Parse target reps or duration from targetValue string if available
+                // Parse target reps, duration, or distance from targetValue string if available
                 let parsedReps = null;
                 let parsedDuration = null;
+                let parsedDistance = null;
+                let parsedDistanceUnit = null;
 
                 if ( re.targetValue ) {
-                    const parsedInt = parseInt( re.targetValue, 10 );
-                    if ( !Number.isNaN( parsedInt ) && parsedInt > 0 ) {
+                    const trimmed = String( re.targetValue ).trim();
+                    const parsedNum = parseFloat( trimmed );
+
+                    if ( !Number.isNaN( parsedNum ) && parsedNum > 0 ) {
                         if ( re.exercise.modality === "TIME_DURATION" ) {
-                            parsedDuration = parsedInt;
+                            // If minutes are specified (e.g. "30m" or "30 min"), convert to seconds
+                            if ( /m(?:in)?/i.test( trimmed ) && !/s(?:ec)?/i.test( trimmed ) ) {
+                                parsedDuration = Math.round( parsedNum * 60 );
+                            } else {
+                                parsedDuration = Math.round( parsedNum );
+                            }
                         } else if ( re.exercise.modality === "WEIGHT_REPS" ) {
-                            parsedReps = parsedInt;
+                            parsedReps = Math.round( parsedNum );
+                        } else if ( re.exercise.modality === "DISTANCE_TIME" ) {
+                            // If string explicitly specifies time duration (e.g. "30 min")
+                            if ( /m(?:in)?/i.test( trimmed ) && !/mi/i.test( trimmed ) ) {
+                                parsedDuration = Math.round( parsedNum * 60 );
+                            } else {
+                                parsedDistance = parsedNum;
+                                if ( /km/i.test( trimmed ) ) {
+                                    parsedDistanceUnit = "km";
+                                } else if ( /mi/i.test( trimmed ) ) {
+                                    parsedDistanceUnit = "mi";
+                                } else if ( /m\b/i.test( trimmed ) ) {
+                                    parsedDistanceUnit = "m";
+                                } else {
+                                    parsedDistanceUnit = "mi";
+                                }
+                            }
                         }
                     }
                 }
@@ -231,8 +256,8 @@ export const startRoutineWorkout = async ( req, res ) => {
                         weight: re.targetWeight || null,
                         reps: parsedReps,
                         durationSeconds: parsedDuration,
-                        distance: null,
-                        distanceUnit: null,
+                        distance: parsedDistance,
+                        distanceUnit: parsedDistanceUnit,
                         rpe: null,
                         isCompleted: false
                     });

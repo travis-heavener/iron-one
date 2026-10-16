@@ -252,33 +252,29 @@ To avoid confusion, the database is partitioned into four distinct functional do
    - `POST /api/workout-exercises/:id/swap` - Swap out exercise `A` with exercise `B` on the fly within an active entry, choosing to keep or reset sets.
 
 ### Phase 6: Mobile-First, Frictionless SPA Frontend
-1. **Authentication Flow**:
-   - Clean, lightweight Login & Register screens with auto-login on token storage.
-2. **Routines Management**:
-   - Routine list with "Start Workout" and "Copy Routine" quick actions.
-   - Visual routine editor to build or reorder template exercises and target sets.
-3. **Journal Feed & Calendar View**:
-   - **Calendar View**: Visual month/week grid displaying daily workout badges (supporting multiple entries on the same date) and quick jump to logs.
-   - **Journal Feed**: Timeline stream of past workouts with search, filter, and "Clone to Today" button.
-4. **Active Workout Logger (Frictionless Gym UI)**:
-   - Designed for zero-friction one-handed input during gym sessions:
-     - Multi-modal set rows:
-       - **Lifts**: Big tap targets for weight & reps with quick incremental step chips (`+5lb`, `+2.5lb`, `+1 rep`, `-1 rep`), variable reps per set.
-       - **Time**: Duration counter / presets (`30s`, `45s`, `60s`, `+5s`).
-       - **Distance**: Quick distance and time log with pace calculation.
-     - 1-tap checkbox to mark sets complete.
-     - "Swap Exercise" modal (instant search, 1-tap replace).
-     - Built-in rest timer with notification/haptic feedback.
-     - **Gym Network Resilience Shield**: Auto-syncs live in-progress draft to `localStorage` so spotty gym cellular connections or phone browser reloads over Tailscale never lose set data.
-5. **Quick Ad-Hoc Logger**:
-   - "Start Empty Workout" button for freeform gym sessions without selecting a template.
-6. **Responsive Desktop Layout**:
-   - Adapts effortlessly to desktop viewports with expanded side-by-side calendar, routine planner, and workout inspect panels.
-7. **Profile & Body Stats View**:
-   - Avatar upload with live preview.
-   - Weight & Height tracker with unit toggle (lbs/kg, in/cm).
-8. **Exercise Library Browser**:
-   - Filter by muscle group, equipment, modality, or custom user exercises.
+- [x] **Sub-Phase 6A: Frontend Foundation & SPA Static Hosting (Completed)**:
+  - Vite + React + Tailwind CSS client architecture with high-contrast gym aesthetic.
+  - Express static asset hosting and SPA client-side routing fallback (`/* -> index.html`).
+  - Centralized API client (`client/src/api/client.js`) and `AuthContext` session management.
+  - Responsive layout shell with anchored header, persistent live workout status ribbon, and mobile bottom navigation dock.
+  - Login & Register authentication screens.
+  - Profile page with avatar upload, body stats tracking, and dynamic imperial/metric unit conversion.
+- [x] **Sub-Phase 6B: Routine Templates & Exercise Catalog (Completed)**:
+  - **Exercise Library Browser (`client/src/pages/ExercisesPage.jsx`)**: Instant search, muscle category chips (Chest, Back, Shoulders, Legs, Arms, Core, Cardio, Full Body), modality chips, and custom vs master filters.
+  - **Custom Exercise Creation**: Modal to define custom movements with validation and archive/delete support.
+  - **Routine Blueprint Manager (`client/src/pages/RoutinesPage.jsx`)**: Visual routine list with split badges, exercise counts, and 1-tap "Start Workout" launcher (`POST /api/routines/:id/start`).
+  - **1-Tap Duplication**: "Copy Routine" action (`POST /api/routines/:id/copy`) for rapid split variation cloning.
+  - **Visual Routine Editor**: Complete modal editor to build split blueprints, reorder exercises, set target sets/reps/weights, and pick movements from a searchable catalog modal.
+- [ ] **Sub-Phase 6C: Active Workout Logger (Frictionless Gym UI)**:
+  - Multi-modal set rows with big touch targets and step increment chips (`+5lb`, `+2.5lb`, `+1 rep`, `-1 rep`).
+  - Time holds & distance/time cardio logger.
+  - 1-tap checkbox to mark sets complete.
+  - Exercise Hot-Swap modal (`POST /api/workout-exercises/:id/swap`) with search and keep/reset sets toggle.
+  - Built-in rest timer with countdown and audio/haptic feedback.
+  - Gym Network Resilience Shield: Auto-sync in-progress workout draft to `localStorage` for offline protection over Tailscale.
+- [ ] **Sub-Phase 6D: Calendar View & Journal Feed**:
+  - Month/week calendar grid with daily workout badges (supporting multiple sessions per date).
+  - Chronological journal stream with date range filtering and "Clone to Today" progressive overload carryover.
 
 ### Phase 7: Tailscale Configuration & Ubuntu 26 Deployment
 1. Configure Express to listen on all interfaces (`0.0.0.0`) or bind specifically to the Tailscale interface (`100.x.y.z`).
