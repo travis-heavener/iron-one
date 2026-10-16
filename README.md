@@ -147,9 +147,14 @@ IronOne is engineered to run seamlessly across private Tailscale mesh networks:
 *(Security headers are pre-configured to allow Tailscale HTTP access without `Cross-Origin-Opener-Policy` restrictions).*
 
 ### Automated Database Backups
-Because IronOne uses SQLite with WAL mode enabled, making automated backups is as simple as copying the database file or using SQLite's native `.backup` command:
+IronOne includes a built-in automated backup tool that creates a safe, non-blocking online WAL snapshot and rotates backups older than 14 days:
 ```bash
-sqlite3 prisma/ironone.db ".backup 'backups/ironone_$(date +%Y%m%d).db'"
+# Create an online snapshot in backups/
+npm run db:backup
+```
+Alternatively, you can create a manual snapshot via SQLite:
+```bash
+sqlite3 ironone.db ".backup 'backups/ironone_$(date +%Y%m%d).db'"
 ```
 
 ---

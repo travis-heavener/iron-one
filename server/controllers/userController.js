@@ -77,8 +77,10 @@ export const updateProfile = async ( req, res ) => {
 
     // Validate height if provided
     if ( height !== undefined ) {
-        if ( height !== null ) {
-            const isInvalidType = typeof height === "boolean" || ( typeof height === "string" && height.trim() === "" );
+        if ( height === null || ( typeof height === "string" && height.trim() === "" ) ) {
+            updateData.height = null;
+        } else {
+            const isInvalidType = typeof height !== "number" && typeof height !== "string";
             const numHeight = Number( height );
             const minHeight = effectiveUnit === "metric" ? 50 : 20;   // 50 cm or 20 inches
             const maxHeight = effectiveUnit === "metric" ? 300 : 120; // 300 cm (~10 ft) or 120 inches (10 ft)
@@ -88,15 +90,15 @@ export const updateProfile = async ( req, res ) => {
                 return sendError( res, `Height must be between ${unitLabel} or null`, "ERR_INVALID_HEIGHT", 400 );
             }
             updateData.height = numHeight;
-        } else {
-            updateData.height = null;
         }
     }
 
     // Validate weight if provided
     if ( weight !== undefined ) {
-        if ( weight !== null ) {
-            const isInvalidType = typeof weight === "boolean" || ( typeof weight === "string" && weight.trim() === "" );
+        if ( weight === null || ( typeof weight === "string" && weight.trim() === "" ) ) {
+            updateData.weight = null;
+        } else {
+            const isInvalidType = typeof weight !== "number" && typeof weight !== "string";
             const numWeight = Number( weight );
             const minWeight = effectiveUnit === "metric" ? 20 : 40;    // 20 kg or 40 lbs
             const maxWeight = effectiveUnit === "metric" ? 500 : 1000; // 500 kg or 1000 lbs
@@ -106,8 +108,6 @@ export const updateProfile = async ( req, res ) => {
                 return sendError( res, `Weight must be between ${unitLabel} or null`, "ERR_INVALID_WEIGHT", 400 );
             }
             updateData.weight = numWeight;
-        } else {
-            updateData.weight = null;
         }
     }
 

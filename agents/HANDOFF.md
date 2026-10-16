@@ -1,7 +1,7 @@
 # IronOne Project Handoff & Session Transition Guide
 
 > **Target Audience:** Incoming AI coding agents and human developers resuming development on any device.
-> **Last Updated:** October 16, 2026 (Completion of Sub-Phase 6C)
+> **Last Updated:** October 16, 2026 (Completion of Phase 6 & Generalized Backup Tool)
 
 ---
 
@@ -9,7 +9,7 @@
 
 **IronOne** is a mobile-first, high-density progressive overload workout logging SPA designed to run flawlessly on the gym floor over private networks (Tailscale) and home servers.
 
-- **Backend:** Node.js (Express), Prisma ORM, SQLite with WAL mode (`prisma/dev.db`).
+- **Backend:** Node.js (Express), Prisma ORM, SQLite with WAL mode (`ironone.db`).
 - **Auth:** Argon2id password hashing, stateless JWT tokens stored in localStorage.
 - **Frontend:** Vite, React 19, Tailwind CSS (gym-floor dark aesthetic: `slate-950` / `emerald-500`), Lucide React icons, `canvas-confetti`.
 - **Hardware Integration:** Screen Wake Lock API (`client/src/utils/wakeLock.js`), Web Audio API tone synthesis, Native Haptics (`client/src/utils/audio.js`).
@@ -33,23 +33,26 @@
   - Strict numeric validation (`> 0` sets and reps) across routine templates.
   - High-visibility routine name validation with red focus rings, inline helper labels, and auto-scroll.
   - Multi-stage confetti celebration ([`confetti.js`](file:///home/travis/Documents/Projects/IronOne/client/src/utils/confetti.js)) and victory haptics upon finishing a workout session.
+- **Sub-Phase 6D (Calendar View & Journal Feed):**
+  - Interactive monthly calendar grid ([`HistoryPage.jsx`](file:///home/travis/Documents/Projects/IronOne/client/src/pages/HistoryPage.jsx)) with daily badges, multi-session indicators, and monthly aggregate cards.
+  - Selected date details drawer with full exercise breakdown and sets.
+  - Chronological journal stream with instant search, split category filter chips, and pagination.
+  - 1-tap "Clone to Today" action (`POST /api/workout-entries/:id/clone`) replicating previous exercises and sets as uncompleted target baselines for progressive overload.
+  - Client-local timezone boundary shifting preventing evening workout clipping across timezones.
+  - Dashboard integration ([`DashboardPage.jsx`](file:///home/travis/Documents/Projects/IronOne/client/src/pages/DashboardPage.jsx)) displaying recent session summaries and quick navigation.
 
 ---
 
-## 3. Next Milestone: Sub-Phase 6D (Calendar View & Journal Feed)
+## 3. Next Milestone: Phase 7 (Development Burn-In & Multi-Device Testing)
 
-The next session should focus directly on **Sub-Phase 6D**:
-1. **Interactive Calendar Grid:**
-   - Month and week views displaying calendar dates with visual session badges.
-   - Must support multiple workouts on the same day (e.g., morning 5k cardio + evening hypertrophy lift).
-   - Highlighting active streaks and volume consistency.
-2. **Chronological Journal Stream:**
-   - Detailed history feed showing completed sessions, movements performed, weight/rep volume, and workout duration.
-   - Date range and split category filters.
-3. **"Clone to Today" Progressive Overload Launcher:**
-   - Ability to select any past session from the journal and clone it as a new active workout for today, pre-filling the weights and reps from that session to encourage progressive overload.
-4. **Dashboard Integration:**
-   - Link the calendar and recent journal snippets directly into the home Dashboard (`DashboardPage.jsx`).
+The project has entered **Phase 7 (Development Burn-In & Field Testing)**:
+1. **Development Run (1–2 Weeks):**
+   - The user will run IronOne directly via `npm start` / `npm run dev` to test gym floor ergonomics, multi-device polling, and progressive overload tracking during live training.
+   - **NO systemd service file:** Daemonization is deferred until after this burn-in period. Do NOT re-introduce any hardcoded service files.
+2. **Automated SQLite Online Backups:**
+   - Portable, zero-external-dependency automated backup tool (`npm run db:backup` / `scripts/backup.sh` via `scripts/backup.js`) with non-blocking WAL snapshotting, size verification, and 14-day rotation.
+3. **Multi-Device & Network Verification:**
+   - Verify live session syncing between mobile (gym floor) and desktop (home review) over Tailscale.
 
 ---
 

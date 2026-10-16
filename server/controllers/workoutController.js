@@ -6,6 +6,36 @@
 import prisma from "../models/db.js";
 import { sendError, sendSuccess } from "../utils/response.js";
 
+// Standard Prisma include structure for full workout entry responses
+const WORKOUT_ENTRY_INCLUDE = {
+    routine: {
+        select: {
+            id: true,
+            name: true,
+            splitTag: true
+        }
+    },
+    workoutExercises: {
+        orderBy: { orderIndex: "asc" },
+        include: {
+            exercise: {
+                select: {
+                    id: true,
+                    name: true,
+                    category: true,
+                    equipment: true,
+                    modality: true,
+                    isCustom: true,
+                    isArchived: true
+                }
+            },
+            sets: {
+                orderBy: { setNumber: "asc" }
+            }
+        }
+    }
+};
+
 // Used to fetch currently active in-progress workout session
 export const getActiveWorkout = async ( req, res ) => {
     try {
@@ -14,34 +44,7 @@ export const getActiveWorkout = async ( req, res ) => {
                 userId: req.user.id,
                 status: "IN_PROGRESS"
             },
-            include: {
-                routine: {
-                    select: {
-                        id: true,
-                        name: true,
-                        splitTag: true
-                    }
-                },
-                workoutExercises: {
-                    orderBy: { orderIndex: "asc" },
-                    include: {
-                        exercise: {
-                            select: {
-                                id: true,
-                                name: true,
-                                category: true,
-                                equipment: true,
-                                modality: true,
-                                isCustom: true,
-                                isArchived: true
-                            }
-                        },
-                        sets: {
-                            orderBy: { setNumber: "asc" }
-                        }
-                    }
-                }
-            }
+            include: WORKOUT_ENTRY_INCLUDE
         });
 
         return sendSuccess( res, activeWorkout );
@@ -54,25 +57,6 @@ export const getActiveWorkout = async ( req, res ) => {
 // Used to start spontaneous ad-hoc workout session from scratch
 export const createWorkoutEntry = async ( req, res ) => {
     const { date, name, notes, splitTag } = req.body || {};
-
-    // Enforce Single Active Workout Rule
-    const existingActive = await prisma.workoutEntry.findFirst({
-        where: {
-            userId: req.user.id,
-            status: "IN_PROGRESS"
-        },
-        select: { id: true, name: true, startedAt: true }
-    });
-
-    if ( existingActive ) {
-        return sendError(
-            res,
-            "An active workout is already in progress. Complete or finish it before starting a new one.",
-            "ERR_ACTIVE_WORKOUT_EXISTS",
-            409,
-            { activeWorkoutId: existingActive.id, activeWorkout: existingActive }
-        );
-    }
 
     // Determine workout title
     let workoutName = "Quick Workout";
@@ -93,28 +77,44 @@ export const createWorkoutEntry = async ( req, res ) => {
     }
 
     try {
-        const entry = await prisma.workoutEntry.create({
-            data: {
-                userId: req.user.id,
-                name: workoutName,
-                splitTag: cleanedSplitTag,
-                notes: cleanedNotes,
-                status: "IN_PROGRESS",
-                date: workoutDate,
-                startedAt: new Date()
-            },
-            include: {
-                workoutExercises: {
-                    include: {
-                        exercise: true,
-                        sets: true
-                    }
-                }
+        const entry = await prisma.$transaction( async ( tx ) => {
+            // Enforce Single Active Workout Rule inside write transaction
+            const existingActive = await tx.workoutEntry.findFirst({
+                where: {
+                    userId: req.user.id,
+                    status: "IN_PROGRESS"
+                },
+                select: { id: true, name: true, startedAt: true }
+            });
+
+            if ( existingActive ) {
+                const conflictErr = new Error( "An active workout is already in progress. Complete or finish it before starting a new one." );
+                conflictErr.code = "ERR_ACTIVE_WORKOUT_EXISTS";
+                conflictErr.status = 409;
+                conflictErr.details = { activeWorkoutId: existingActive.id, activeWorkout: existingActive };
+                throw conflictErr;
             }
+
+            return await tx.workoutEntry.create({
+                data: {
+                    userId: req.user.id,
+                    name: workoutName,
+                    splitTag: cleanedSplitTag,
+                    notes: cleanedNotes,
+                    status: "IN_PROGRESS",
+                    date: workoutDate,
+                    startedAt: new Date()
+                },
+                include: WORKOUT_ENTRY_INCLUDE
+            });
         });
 
         return sendSuccess( res, entry, 201 );
     } catch ( err ) {
+        if ( err.code === "ERR_ACTIVE_WORKOUT_EXISTS" ) {
+            return sendError( res, err.message, err.code, err.status || 409, err.details );
+        }
+
         console.error( "[Create Workout Entry Error]", err );
         return sendError( res, "Failed to start workout session", "ERR_CREATE_WORKOUT_FAILED", 500 );
     }
@@ -127,25 +127,6 @@ export const startRoutineWorkout = async ( req, res ) => {
 
     if ( !id || typeof id !== "string" || id.length > 50 ) {
         return sendError( res, "Workout routine not found", "ERR_ROUTINE_NOT_FOUND", 404 );
-    }
-
-    // Enforce Single Active Workout Rule
-    const existingActive = await prisma.workoutEntry.findFirst({
-        where: {
-            userId: req.user.id,
-            status: "IN_PROGRESS"
-        },
-        select: { id: true, name: true, startedAt: true }
-    });
-
-    if ( existingActive ) {
-        return sendError(
-            res,
-            "An active workout is already in progress. Complete or finish it before starting a new one.",
-            "ERR_ACTIVE_WORKOUT_EXISTS",
-            409,
-            { activeWorkoutId: existingActive.id, activeWorkout: existingActive }
-        );
     }
 
     try {
@@ -179,6 +160,23 @@ export const startRoutineWorkout = async ( req, res ) => {
         }
 
         const newEntry = await prisma.$transaction( async ( tx ) => {
+            // Enforce Single Active Workout Rule inside write transaction
+            const existingActive = await tx.workoutEntry.findFirst({
+                where: {
+                    userId: req.user.id,
+                    status: "IN_PROGRESS"
+                },
+                select: { id: true, name: true, startedAt: true }
+            });
+
+            if ( existingActive ) {
+                const conflictErr = new Error( "An active workout is already in progress. Complete or finish it before starting a new one." );
+                conflictErr.code = "ERR_ACTIVE_WORKOUT_EXISTS";
+                conflictErr.status = 409;
+                conflictErr.details = { activeWorkoutId: existingActive.id, activeWorkout: existingActive };
+                throw conflictErr;
+            }
+
             const entry = await tx.workoutEntry.create({
                 data: {
                     userId: req.user.id,
@@ -270,25 +268,16 @@ export const startRoutineWorkout = async ( req, res ) => {
 
             return await tx.workoutEntry.findUnique({
                 where: { id: entry.id },
-                include: {
-                    routine: {
-                        select: { id: true, name: true, splitTag: true }
-                    },
-                    workoutExercises: {
-                        orderBy: { orderIndex: "asc" },
-                        include: {
-                            exercise: true,
-                            sets: {
-                                orderBy: { setNumber: "asc" }
-                            }
-                        }
-                    }
-                }
+                include: WORKOUT_ENTRY_INCLUDE
             });
         });
 
         return sendSuccess( res, newEntry, 201 );
     } catch ( err ) {
+        if ( err.code === "ERR_ACTIVE_WORKOUT_EXISTS" ) {
+            return sendError( res, err.message, err.code, err.status || 409, err.details );
+        }
+
         console.error( "[Start Routine Workout Error]", err );
         return sendError( res, "Failed to start workout from routine", "ERR_START_ROUTINE_FAILED", 500 );
     }
@@ -296,14 +285,14 @@ export const startRoutineWorkout = async ( req, res ) => {
 
 // Used to retrieve chronological paginated journal feed of workouts
 export const getWorkoutEntries = async ( req, res ) => {
-    const { endDate, limit, offset, routineId, startDate, status } = req.query;
+    const { endDate, limit, offset, routineId, search, splitTag, startDate, status, timezoneOffset } = req.query;
 
     const where = {
         userId: req.user.id
     };
 
     // Filter by status if provided
-    if ( status && ( status === "IN_PROGRESS" || status === "COMPLETED" ) ) {
+    if ( status && ( status === "IN_PROGRESS" || status === "COMPLETED" || status === "CANCELED" ) ) {
         where.status = status;
     }
 
@@ -312,22 +301,48 @@ export const getWorkoutEntries = async ( req, res ) => {
         where.routineId = routineId;
     }
 
-    // Filter by date range if provided
+    // Filter by splitTag if provided
+    if ( splitTag && typeof splitTag === "string" && splitTag.trim() !== "" ) {
+        where.splitTag = splitTag.trim();
+    }
+
+    // Filter by name search substring if provided
+    if ( search && typeof search === "string" && search.trim() !== "" ) {
+        where.name = {
+            contains: search.trim().slice( 0, 100 )
+        };
+    }
+
+    // Filter by date range if provided w/ optional timezone offset adjustment
     if ( startDate || endDate ) {
+        const parsedOffsetMin = parseInt( timezoneOffset, 10 );
+        const offsetMs = !Number.isNaN( parsedOffsetMin ) ? parsedOffsetMin * 60 * 1000 : 0;
+
         where.date = {};
         if ( startDate ) {
-            const start = new Date( startDate );
-            if ( !Number.isNaN( start.getTime() ) ) {
-                where.date.gte = start;
+            if ( typeof startDate === "string" && !startDate.includes( "T" ) ) {
+                const start = new Date( new Date( `${startDate}T00:00:00.000Z` ).getTime() + offsetMs );
+                if ( !Number.isNaN( start.getTime() ) ) {
+                    where.date.gte = start;
+                }
+            } else {
+                const start = new Date( startDate );
+                if ( !Number.isNaN( start.getTime() ) ) {
+                    where.date.gte = start;
+                }
             }
         }
         if ( endDate ) {
-            let end = new Date( endDate );
-            if ( !Number.isNaN( end.getTime() ) ) {
-                if ( typeof endDate === "string" && !endDate.includes( "T" ) ) {
-                    end = new Date( `${endDate}T23:59:59.999Z` );
+            if ( typeof endDate === "string" && !endDate.includes( "T" ) ) {
+                const end = new Date( new Date( `${endDate}T23:59:59.999Z` ).getTime() + offsetMs );
+                if ( !Number.isNaN( end.getTime() ) ) {
+                    where.date.lte = end;
                 }
-                where.date.lte = end;
+            } else {
+                const end = new Date( endDate );
+                if ( !Number.isNaN( end.getTime() ) ) {
+                    where.date.lte = end;
+                }
             }
         }
     }
@@ -345,28 +360,7 @@ export const getWorkoutEntries = async ( req, res ) => {
                 ],
                 take: parsedLimit,
                 skip: parsedOffset,
-                include: {
-                    routine: {
-                        select: { id: true, name: true, splitTag: true }
-                    },
-                    workoutExercises: {
-                        orderBy: { orderIndex: "asc" },
-                        include: {
-                            exercise: {
-                                select: {
-                                    id: true,
-                                    name: true,
-                                    category: true,
-                                    equipment: true,
-                                    modality: true
-                                }
-                            },
-                            sets: {
-                                orderBy: { setNumber: "asc" }
-                            }
-                        }
-                    }
-                }
+                include: WORKOUT_ENTRY_INCLUDE
             }),
             prisma.workoutEntry.count({ where })
         ]);
@@ -388,7 +382,7 @@ export const getWorkoutEntries = async ( req, res ) => {
 
 // Used to aggregate daily workout badges for calendar view
 export const getCalendarWorkouts = async ( req, res ) => {
-    const { endDate: qEndDate, month, startDate: qStartDate, year } = req.query;
+    const { endDate: qEndDate, month, startDate: qStartDate, timezoneOffset, year } = req.query;
 
     const where = {
         userId: req.user.id
@@ -425,8 +419,9 @@ export const getCalendarWorkouts = async ( req, res ) => {
                 }
             }
 
-            const startDate = new Date( Date.UTC( y, startMonth, 1, 0, 0, 0 ) );
-            const endDate = new Date( Date.UTC( y, endMonth + 1, 0, 23, 59, 59, 999 ) );
+            // Pad window by 24h to avoid clipping boundary workouts in non-UTC timezones
+            const startDate = new Date( Date.UTC( y, startMonth, 1, 0, 0, 0 ) - ( 24 * 60 * 60 * 1000 ) );
+            const endDate = new Date( Date.UTC( y, endMonth + 1, 0, 23, 59, 59, 999 ) + ( 24 * 60 * 60 * 1000 ) );
 
             where.date = {
                 gte: startDate,
@@ -445,15 +440,24 @@ export const getCalendarWorkouts = async ( req, res ) => {
                 splitTag: true,
                 status: true,
                 date: true,
-                durationMinutes: true
+                durationMinutes: true,
+                _count: {
+                    select: {
+                        workoutExercises: true
+                    }
+                }
             }
         });
 
-        // Group entries by date string YYYY-MM-DD
+        // Group entries by date string YYYY-MM-DD adjusted for client timezone if provided
+        const parsedOffsetMin = parseInt( timezoneOffset, 10 );
+        const offsetMs = !Number.isNaN( parsedOffsetMin ) ? parsedOffsetMin * 60 * 1000 : 0;
+
         const calendarMap = {};
         for ( let i = 0; i < entries.length; ++i ) {
             const entry = entries[i];
-            const dateStr = entry.date.toISOString().split( "T" )[0];
+            const localTime = new Date( entry.date.getTime() - offsetMs );
+            const dateStr = localTime.toISOString().split( "T" )[0];
 
             if ( !calendarMap[dateStr] ) {
                 calendarMap[dateStr] = [];
@@ -465,7 +469,8 @@ export const getCalendarWorkouts = async ( req, res ) => {
                 splitTag: entry.splitTag,
                 status: entry.status,
                 date: entry.date,
-                durationMinutes: entry.durationMinutes
+                durationMinutes: entry.durationMinutes,
+                exerciseCount: entry._count?.workoutExercises ?? 0
             });
         }
 
@@ -490,30 +495,7 @@ export const getWorkoutEntryById = async ( req, res ) => {
                 id,
                 userId: req.user.id
             },
-            include: {
-                routine: {
-                    select: { id: true, name: true, splitTag: true }
-                },
-                workoutExercises: {
-                    orderBy: { orderIndex: "asc" },
-                    include: {
-                        exercise: {
-                            select: {
-                                id: true,
-                                name: true,
-                                category: true,
-                                equipment: true,
-                                modality: true,
-                                isCustom: true,
-                                isArchived: true
-                            }
-                        },
-                        sets: {
-                            orderBy: { setNumber: "asc" }
-                        }
-                    }
-                }
-            }
+            include: WORKOUT_ENTRY_INCLUDE
         });
 
         if ( !entry ) {
@@ -530,7 +512,7 @@ export const getWorkoutEntryById = async ( req, res ) => {
 // Used to update workout entry metadata (name, splitTag, notes, date)
 export const updateWorkoutEntry = async ( req, res ) => {
     const { id } = req.params;
-    const { date, durationMinutes, name, notes, splitTag } = req.body || {};
+    const { date, durationMinutes, name, notes, splitTag, status } = req.body || {};
 
     if ( !id || typeof id !== "string" || id.length > 50 ) {
         return sendError( res, "Workout entry not found", "ERR_ENTRY_NOT_FOUND", 404 );
@@ -549,6 +531,17 @@ export const updateWorkoutEntry = async ( req, res ) => {
         }
 
         const updateData = {};
+
+        // Validate and update status
+        if ( status !== undefined ) {
+            if ( status !== "IN_PROGRESS" && status !== "COMPLETED" && status !== "CANCELED" ) {
+                return sendError( res, "Status must be IN_PROGRESS, COMPLETED, or CANCELED", "ERR_INVALID_STATUS", 400 );
+            }
+            updateData.status = status;
+            if ( status === "COMPLETED" && !existingEntry.completedAt ) {
+                updateData.completedAt = new Date();
+            }
+        }
 
         // Validate and update name
         if ( name !== undefined ) {
@@ -612,7 +605,8 @@ export const updateWorkoutEntry = async ( req, res ) => {
 
         const updated = await prisma.workoutEntry.update({
             where: { id },
-            data: updateData
+            data: updateData,
+            include: WORKOUT_ENTRY_INCLUDE
         });
 
         return sendSuccess( res, updated );
@@ -669,17 +663,7 @@ export const completeWorkoutEntry = async ( req, res ) => {
                 completedAt: validCompletedAt,
                 durationMinutes: finalDuration
             },
-            include: {
-                workoutExercises: {
-                    orderBy: { orderIndex: "asc" },
-                    include: {
-                        exercise: true,
-                        sets: {
-                            orderBy: { setNumber: "asc" }
-                        }
-                    }
-                }
-            }
+            include: WORKOUT_ENTRY_INCLUDE
         });
 
         return sendSuccess( res, completedEntry );
@@ -696,25 +680,6 @@ export const cloneWorkoutEntry = async ( req, res ) => {
 
     if ( !id || typeof id !== "string" || id.length > 50 ) {
         return sendError( res, "Workout entry not found", "ERR_ENTRY_NOT_FOUND", 404 );
-    }
-
-    // Enforce Single Active Workout Rule
-    const existingActive = await prisma.workoutEntry.findFirst({
-        where: {
-            userId: req.user.id,
-            status: "IN_PROGRESS"
-        },
-        select: { id: true, name: true, startedAt: true }
-    });
-
-    if ( existingActive ) {
-        return sendError(
-            res,
-            "An active workout is already in progress. Complete or finish it before cloning another session.",
-            "ERR_ACTIVE_WORKOUT_EXISTS",
-            409,
-            { activeWorkoutId: existingActive.id, activeWorkout: existingActive }
-        );
     }
 
     try {
@@ -749,6 +714,23 @@ export const cloneWorkoutEntry = async ( req, res ) => {
         }
 
         const clonedEntry = await prisma.$transaction( async ( tx ) => {
+            // Enforce Single Active Workout Rule inside write transaction
+            const existingActive = await tx.workoutEntry.findFirst({
+                where: {
+                    userId: req.user.id,
+                    status: "IN_PROGRESS"
+                },
+                select: { id: true, name: true, startedAt: true }
+            });
+
+            if ( existingActive ) {
+                const conflictErr = new Error( "An active workout is already in progress. Complete or finish it before cloning another session." );
+                conflictErr.code = "ERR_ACTIVE_WORKOUT_EXISTS";
+                conflictErr.status = 409;
+                conflictErr.details = { activeWorkoutId: existingActive.id, activeWorkout: existingActive };
+                throw conflictErr;
+            }
+
             const newEntry = await tx.workoutEntry.create({
                 data: {
                     userId: req.user.id,
@@ -796,22 +778,16 @@ export const cloneWorkoutEntry = async ( req, res ) => {
 
             return await tx.workoutEntry.findUnique({
                 where: { id: newEntry.id },
-                include: {
-                    workoutExercises: {
-                        orderBy: { orderIndex: "asc" },
-                        include: {
-                            exercise: true,
-                            sets: {
-                                orderBy: { setNumber: "asc" }
-                            }
-                        }
-                    }
-                }
+                include: WORKOUT_ENTRY_INCLUDE
             });
         });
 
         return sendSuccess( res, clonedEntry, 201 );
     } catch ( err ) {
+        if ( err.code === "ERR_ACTIVE_WORKOUT_EXISTS" ) {
+            return sendError( res, err.message, err.code, err.status || 409, err.details );
+        }
+
         console.error( "[Clone Workout Entry Error]", err );
         return sendError( res, "Failed to clone workout session", "ERR_CLONE_ENTRY_FAILED", 500 );
     }

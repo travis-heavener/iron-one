@@ -13,6 +13,7 @@ node_modules/
 *.db-journal
 *.db-wal
 *.db-shm
+backups/
 
 # Build output
 dist/

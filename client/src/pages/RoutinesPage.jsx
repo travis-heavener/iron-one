@@ -68,7 +68,7 @@ export const RoutinesPage = ({ onNavigate }) => {
 
     // Editor State
     const [ isEditorOpen, setIsEditorOpen ] = useState( false );
-    const [ editingRoutineId, setEditingRoutineId ] = useState( null ); // null = create new
+    const [ editingRoutineId, setEditingRoutineId ] = useState( null ); // Null indicates create mode
     const [ formName, setFormName ] = useState( "" );
     const [ formSplitTag, setFormSplitTag ] = useState( "Push" );
     const [ formNotes, setFormNotes ] = useState( "" );
@@ -358,12 +358,12 @@ export const RoutinesPage = ({ onNavigate }) => {
             return;
         }
 
-        // Validate sets and reps (> 0) for each exercise item
+        // Validate sets, reps, and weights for each exercise item
         for ( let i = 0; i < formExercises.length; ++i ) {
             const item = formExercises[i];
             const setsNum = parseInt( item.targetSets, 10 );
-            if ( Number.isNaN( setsNum ) || setsNum < 1 || setsNum > 50 ) {
-                const msg = `Exercise #${i + 1} (${item.name}): Target sets must be a positive integer greater than 0 (1–50)`;
+            if ( Number.isNaN( setsNum ) || setsNum < 1 || setsNum > 20 ) {
+                const msg = `Exercise #${i + 1} (${item.name}): Target sets must be a positive integer between 1 and 20`;
                 setEditorError( msg );
                 await modal.alert({
                     title: "Invalid Target Sets",
@@ -371,6 +371,20 @@ export const RoutinesPage = ({ onNavigate }) => {
                     variant: "warning"
                 });
                 return;
+            }
+
+            if ( item.targetWeight !== "" && item.targetWeight !== null && item.targetWeight !== undefined ) {
+                const weightNum = Number( item.targetWeight );
+                if ( Number.isNaN( weightNum ) || weightNum < 0 || weightNum > 2000 ) {
+                    const msg = `Exercise #${i + 1} (${item.name}): Target weight must be a valid number between 0 and 2000`;
+                    setEditorError( msg );
+                    await modal.alert({
+                        title: "Invalid Target Weight",
+                        message: msg,
+                        variant: "warning"
+                    });
+                    return;
+                }
             }
 
             if ( item.modality === "WEIGHT_REPS" ) {
@@ -407,7 +421,7 @@ export const RoutinesPage = ({ onNavigate }) => {
                 orderIndex: idx,
                 targetSets: parseInt( item.targetSets, 10 ) || 3,
                 targetValue: item.targetValue !== "" && item.targetValue !== null ? String( item.targetValue ).trim() : null,
-                targetWeight: item.targetWeight !== "" && !isNaN( Number( item.targetWeight ) ) ? Number( item.targetWeight ) : null,
+                targetWeight: item.targetWeight !== "" && !isNaN( Number( item.targetWeight ) ) && Number( item.targetWeight ) >= 0 ? Number( item.targetWeight ) : null,
                 notes: item.notes ? String( item.notes ).trim() : null
             }) )
         };

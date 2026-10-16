@@ -67,7 +67,7 @@ export const ExercisesPage = ({ onNavigate }) => {
     const [ search, setSearch ] = useState( "" );
     const [ selectedCategory, setSelectedCategory ] = useState( "All" );
     const [ selectedModality, setSelectedModality ] = useState( "" );
-    const [ sourceFilter, setSourceFilter ] = useState( "all" ); // "all" | "master" | "custom"
+    const [ sourceFilter, setSourceFilter ] = useState( "all" ); // Filter options: "all" | "master" | "custom"
 
     // Custom Exercise Modal State
     const [ isModalOpen, setIsModalOpen ] = useState( false );

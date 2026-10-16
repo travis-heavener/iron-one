@@ -55,7 +55,7 @@ export const addSetToWorkoutExercise = async ( req, res ) => {
 
         // Validate weight
         let parsedWeight = null;
-        if ( weight !== undefined && weight !== null ) {
+        if ( weight !== undefined && weight !== null && weight !== "" ) {
             const w = parseFloat( weight );
             if ( Number.isNaN( w ) || w < 0 || w > 2000 ) {
                 return sendError( res, "Weight must be a positive number <= 2000", "ERR_INVALID_WEIGHT", 400 );
@@ -65,7 +65,7 @@ export const addSetToWorkoutExercise = async ( req, res ) => {
 
         // Validate reps
         let parsedReps = null;
-        if ( reps !== undefined && reps !== null ) {
+        if ( reps !== undefined && reps !== null && reps !== "" ) {
             const r = parseInt( reps, 10 );
             if ( Number.isNaN( r ) || r < 0 || r > 1000 ) {
                 return sendError( res, "Reps must be a positive integer <= 1000", "ERR_INVALID_REPS", 400 );
@@ -75,7 +75,7 @@ export const addSetToWorkoutExercise = async ( req, res ) => {
 
         // Validate durationSeconds
         let parsedDuration = null;
-        if ( durationSeconds !== undefined && durationSeconds !== null ) {
+        if ( durationSeconds !== undefined && durationSeconds !== null && durationSeconds !== "" ) {
             const d = parseInt( durationSeconds, 10 );
             if ( Number.isNaN( d ) || d < 0 || d > 86400 ) {
                 return sendError( res, "Duration seconds must be a positive integer <= 86400", "ERR_INVALID_DURATION", 400 );
@@ -85,7 +85,7 @@ export const addSetToWorkoutExercise = async ( req, res ) => {
 
         // Validate distance
         let parsedDistance = null;
-        if ( distance !== undefined && distance !== null ) {
+        if ( distance !== undefined && distance !== null && distance !== "" ) {
             const dist = parseFloat( distance );
             if ( Number.isNaN( dist ) || dist < 0 || dist > 1000 ) {
                 return sendError( res, "Distance must be a positive number <= 1000", "ERR_INVALID_DISTANCE", 400 );
@@ -97,7 +97,7 @@ export const addSetToWorkoutExercise = async ( req, res ) => {
 
         // Validate RPE
         let parsedRpe = null;
-        if ( rpe !== undefined && rpe !== null ) {
+        if ( rpe !== undefined && rpe !== null && rpe !== "" ) {
             const parsed = parseFloat( rpe );
             if ( Number.isNaN( parsed ) || parsed < 1 || parsed > 10 ) {
                 return sendError( res, "RPE must be a number between 1.0 and 10.0", "ERR_INVALID_RPE", 400 );
@@ -189,7 +189,7 @@ export const updateExerciseSet = async ( req, res ) => {
 
         // Update weight
         if ( weight !== undefined ) {
-            if ( weight === null ) {
+            if ( weight === null || weight === "" ) {
                 updateData.weight = null;
             } else {
                 const w = parseFloat( weight );
@@ -202,7 +202,7 @@ export const updateExerciseSet = async ( req, res ) => {
 
         // Update reps
         if ( reps !== undefined ) {
-            if ( reps === null ) {
+            if ( reps === null || reps === "" ) {
                 updateData.reps = null;
             } else {
                 const r = parseInt( reps, 10 );
@@ -215,7 +215,7 @@ export const updateExerciseSet = async ( req, res ) => {
 
         // Update durationSeconds
         if ( durationSeconds !== undefined ) {
-            if ( durationSeconds === null ) {
+            if ( durationSeconds === null || durationSeconds === "" ) {
                 updateData.durationSeconds = null;
             } else {
                 const d = parseInt( durationSeconds, 10 );
@@ -228,7 +228,7 @@ export const updateExerciseSet = async ( req, res ) => {
 
         // Update distance
         if ( distance !== undefined ) {
-            if ( distance === null ) {
+            if ( distance === null || distance === "" ) {
                 updateData.distance = null;
             } else {
                 const dist = parseFloat( distance );
@@ -246,7 +246,7 @@ export const updateExerciseSet = async ( req, res ) => {
 
         // Update RPE
         if ( rpe !== undefined ) {
-            if ( rpe === null ) {
+            if ( rpe === null || rpe === "" ) {
                 updateData.rpe = null;
             } else {
                 const parsed = parseFloat( rpe );

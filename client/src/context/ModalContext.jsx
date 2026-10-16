@@ -24,7 +24,7 @@ export const ModalProvider = ({ children }) => {
         message: "",
         confirmText: "Confirm",
         cancelText: "Cancel",
-        variant: "primary", // "primary" | "danger" | "warning" | "info"
+        variant: "primary", // Options: "primary" | "danger" | "warning" | "info"
         resolve: null
     });
 

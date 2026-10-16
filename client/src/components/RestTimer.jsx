@@ -42,7 +42,7 @@ export const RestTimer = ({
     const [ isMinimized, setIsMinimized ] = useState( false );
     const [ isFinished, setIsFinished ] = useState( false );
 
-    const timerRef = useRef( null );
+    const targetEndTimeRef = useRef( null );
 
     // Reset timer when opened or when trigger updates on new set completion
     useEffect( () => {
@@ -52,27 +52,40 @@ export const RestTimer = ({
             setIsRunning( true );
             setIsFinished( false );
             setIsMinimized( false );
+            targetEndTimeRef.current = Date.now() + secs * 1000;
         }
     }, [ isOpen, trigger ] );
 
-    // Countdown interval
+    // Real-time timestamp countdown interval w/ mobile background wake sync
     useEffect( () => {
         if ( !isOpen || !isRunning || isFinished ) return;
 
-        timerRef.current = setInterval( () => {
-            setSecondsLeft( ( prev ) => {
-                if ( prev <= 1 ) {
-                    clearInterval( timerRef.current );
-                    setIsRunning( false );
-                    setIsFinished( true );
-                    playTimerCompleteTone();
-                    return 0;
-                }
-                return prev - 1;
-            } );
-        }, 1000 );
+        const tick = () => {
+            if ( !targetEndTimeRef.current ) return;
+            const diffMs = targetEndTimeRef.current - Date.now();
+            const remaining = Math.max( 0, Math.ceil( diffMs / 1000 ) );
+            setSecondsLeft( remaining );
 
-        return () => clearInterval( timerRef.current );
+            if ( remaining <= 0 ) {
+                targetEndTimeRef.current = null;
+                setIsRunning( false );
+                setIsFinished( true );
+                playTimerCompleteTone();
+            }
+        };
+
+        const interval = setInterval( tick, 500 );
+
+        // Instantly resync remaining time when returning from background or unlocking phone
+        const handleSync = () => tick();
+        window.addEventListener( "focus", handleSync );
+        document.addEventListener( "visibilitychange", handleSync );
+
+        return () => {
+            clearInterval( interval );
+            window.removeEventListener( "focus", handleSync );
+            document.removeEventListener( "visibilitychange", handleSync );
+        };
     }, [ isOpen, isRunning, isFinished ] );
 
     if ( !isOpen ) return null;
@@ -84,17 +97,14 @@ export const RestTimer = ({
 
     const handleAdjust = ( delta ) => {
         primeAudioContext();
-        setSecondsLeft( ( prev ) => {
-            const next = Math.max( 5, prev + delta );
-            if ( next > totalSeconds ) {
-                setTotalSeconds( next );
-            }
-            return next;
-        } );
-        if ( isFinished ) {
-            setIsFinished( false );
-            setIsRunning( true );
+        const next = Math.max( 5, secondsLeft + delta );
+        if ( next > totalSeconds ) {
+            setTotalSeconds( next );
         }
+        setSecondsLeft( next );
+        setIsFinished( false );
+        setIsRunning( true );
+        targetEndTimeRef.current = Date.now() + next * 1000;
     };
 
     const handleSelectPreset = ( secs ) => {
@@ -103,6 +113,7 @@ export const RestTimer = ({
         setSecondsLeft( secs );
         setIsRunning( true );
         setIsFinished( false );
+        targetEndTimeRef.current = Date.now() + secs * 1000;
     };
 
     const handleReset = () => {
@@ -110,11 +121,20 @@ export const RestTimer = ({
         setSecondsLeft( totalSeconds );
         setIsRunning( true );
         setIsFinished( false );
+        targetEndTimeRef.current = Date.now() + totalSeconds * 1000;
     };
 
     const handleToggleRun = () => {
         primeAudioContext();
-        setIsRunning( ( prev ) => !prev );
+        setIsRunning( ( prev ) => {
+            const next = !prev;
+            if ( next ) {
+                targetEndTimeRef.current = Date.now() + secondsLeft * 1000;
+            } else {
+                targetEndTimeRef.current = null;
+            }
+            return next;
+        } );
     };
 
     // Render using React Portal at z-[45] above navigation dock

@@ -137,24 +137,47 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
 
     // Exercise Hot-Swap modal state
     const [ isSwapOpen, setIsSwapOpen ] = useState( false );
-    const [ swapTarget, setSwapTarget ] = useState( null ); // { workoutExerciseId, exerciseId, exerciseName, exerciseCategory }
+    const [ swapTarget, setSwapTarget ] = useState( null ); // Target shape: { workoutExerciseId, exerciseId, exerciseName, exerciseCategory }
     const [ swapSearch, setSwapSearch ] = useState( "" );
     const [ swapCategory, setSwapCategory ] = useState( "All" );
     const [ swapKeepSets, setSwapKeepSets ] = useState( true );
     const [ swapping, setSwapping ] = useState( false );
 
-    // Debounce timers map to throttle rapid stepper clicks and keystrokes
+    // Debounce timers and actions map to throttle rapid stepper clicks and keystrokes
     const debounceTimers = useRef( {} );
+    const pendingDebounceActions = useRef( {} );
     const workoutDetailsRef = useRef( null );
+    const activeWorkoutRef = useRef( activeWorkout );
 
     useEffect( () => {
         workoutDetailsRef.current = workoutDetails;
     }, [ workoutDetails ] );
 
+    useEffect( () => {
+        activeWorkoutRef.current = activeWorkout;
+    }, [ activeWorkout ] );
+
+    const flushPendingDebouncedUpdates = async () => {
+        const promises = [];
+        for ( const [ key, timer ] of Object.entries( debounceTimers.current ) ) {
+            clearTimeout( timer );
+            if ( pendingDebounceActions.current[key] ) {
+                promises.push( pendingDebounceActions.current[key]() );
+                delete pendingDebounceActions.current[key];
+            }
+        }
+        debounceTimers.current = {};
+        if ( promises.length > 0 ) {
+            await Promise.allSettled( promises );
+        }
+    };
+
     // Clean up debounce timers on unmount
     useEffect( () => {
         return () => {
             Object.values( debounceTimers.current ).forEach( ( timer ) => clearTimeout( timer ) );
+            debounceTimers.current = {};
+            pendingDebounceActions.current = {};
         };
     }, [] );
 
@@ -181,15 +204,21 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
             setIsOnline( true );
             const queue = getOfflineQueue();
             if ( queue.length > 0 ) {
-                clearOfflineQueue();
+                const remainingQueue = [];
                 for ( const item of queue ) {
                     try {
                         await setApi.updateSet( item.setId, item.payload );
                     } catch ( err ) {
                         console.warn( "[ActiveWorkout] Failed to sync queued offline update:", item, err );
+                        remainingQueue.push( item );
                     }
                 }
-                await fetchFullWorkout();
+                if ( remainingQueue.length === 0 ) {
+                    clearOfflineQueue();
+                } else {
+                    localStorage.setItem( "ironone_offline_queue", JSON.stringify( remainingQueue ) );
+                }
+                await fetchFullWorkout( true );
             }
         };
 
@@ -215,22 +244,25 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
 
     // Fetch full workout details w/ exercises and sets on mount/change
     const fetchFullWorkout = async ( silent = false ) => {
-        if ( !activeWorkout?.id ) {
+        const targetId = activeWorkoutRef.current?.id || activeWorkout?.id;
+        if ( !targetId ) {
             setWorkoutDetails( null );
             return;
         }
 
         if ( !silent ) setLoadingDetails( true );
         try {
-            const data = await workoutApi.getWorkoutById( activeWorkout.id );
+            const data = await workoutApi.getWorkoutById( targetId );
             setWorkoutDetails( data );
+            workoutDetailsRef.current = data;
             saveWorkoutDraft( data );
         } catch ( err ) {
             if ( !silent ) {
                 console.error( "[ActiveWorkout] Failed to load session details:", err );
                 const cached = getWorkoutDraft();
-                if ( cached?.workout && cached.workout.id === activeWorkout.id ) {
+                if ( cached?.workout && cached.workout.id === targetId ) {
                     setWorkoutDetails( cached.workout );
+                    workoutDetailsRef.current = cached.workout;
                 }
             }
         } finally {
@@ -432,13 +464,18 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
         if ( debounceTimers.current[key] ) {
             clearTimeout( debounceTimers.current[key] );
         }
-        debounceTimers.current[key] = setTimeout( async () => {
-            delete debounceTimers.current[key];
+        const action = async () => {
             try {
                 await workoutExerciseApi.updateExercise( workoutExerciseId, { notes: notes.trim() || null } );
             } catch ( err ) {
                 console.error( "[ActiveWorkout] Failed to save exercise notes:", err );
             }
+        };
+        pendingDebounceActions.current[key] = action;
+        debounceTimers.current[key] = setTimeout( async () => {
+            delete debounceTimers.current[key];
+            delete pendingDebounceActions.current[key];
+            await action();
         }, 500 );
     };
 
@@ -562,12 +599,10 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
         });
         if ( !confirmed ) return;
 
-        // Flush pending debounce timers before completing session
-        Object.values( debounceTimers.current ).forEach( ( timer ) => clearTimeout( timer ) );
-        debounceTimers.current = {};
-
         setFinishing( true );
         try {
+            // Flush pending debounced updates before completing session
+            await flushPendingDebouncedUpdates();
             await workoutApi.completeWorkout( activeWorkout.id );
             clearWorkoutDraft();
             clearOfflineQueue();
@@ -597,9 +632,10 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
         });
         if ( !confirmed ) return;
 
-        // Clear debounce timers
+        // Clear debounce timers without saving
         Object.values( debounceTimers.current ).forEach( ( timer ) => clearTimeout( timer ) );
         debounceTimers.current = {};
+        pendingDebounceActions.current = {};
 
         setDiscarding( true );
         try {
@@ -625,10 +661,14 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
             const entry = await workoutApi.createWorkout({ name: "Quick Workout" });
             setActiveWorkout( entry );
         } catch ( err ) {
-            await modal.alert({
-                title: "Failed to Start Workout",
-                message: err.message || "Failed to start workout"
-            });
+            if ( err.code === "ERR_ACTIVE_WORKOUT_EXISTS" ) {
+                await refreshActiveWorkout();
+            } else {
+                await modal.alert({
+                    title: "Failed to Start Workout",
+                    message: err.message || "Failed to start workout"
+                });
+            }
         } finally {
             setStartingEmpty( false );
         }
@@ -648,6 +688,7 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
                     sets: ( we.sets || [] ).map( ( s ) => ( s.id === setId ? { ...s, isCompleted: nextCompleted } : s ) )
                 }) )
             };
+            workoutDetailsRef.current = updated;
             saveWorkoutDraft( updated );
             return updated;
         } );
@@ -677,8 +718,7 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
             clearTimeout( debounceTimers.current[key] );
         }
 
-        debounceTimers.current[key] = setTimeout( async () => {
-            delete debounceTimers.current[key];
+        const action = async () => {
             try {
                 await setApi.updateSet( setId, { [field]: value } );
             } catch ( err ) {
@@ -687,18 +727,33 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
                     enqueueOfflineUpdate( setId, { [field]: value } );
                 }
             }
+        };
+        pendingDebounceActions.current[key] = action;
+
+        debounceTimers.current[key] = setTimeout( async () => {
+            delete debounceTimers.current[key];
+            delete pendingDebounceActions.current[key];
+            await action();
         }, 300 );
     };
 
     // Used to update standard metric field (weight, reps, distance)
     const handleUpdateSetMetric = ( setId, field, value ) => {
+        let cleanValue = value;
+        if ( cleanValue === "" || cleanValue === null || cleanValue === undefined ) {
+            cleanValue = null;
+        } else {
+            const num = Number( cleanValue );
+            cleanValue = Number.isNaN( num ) ? null : Math.max( 0, num );
+        }
+
         setWorkoutDetails( ( prev ) => {
             if ( !prev ) return prev;
             const updated = {
                 ...prev,
                 workoutExercises: ( prev.workoutExercises || [] ).map( ( we ) => ({
                     ...we,
-                    sets: ( we.sets || [] ).map( ( s ) => ( s.id === setId ? { ...s, [field]: value } : s ) )
+                    sets: ( we.sets || [] ).map( ( s ) => ( s.id === setId ? { ...s, [field]: cleanValue } : s ) )
                 }) )
             };
             workoutDetailsRef.current = updated;
@@ -706,7 +761,7 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
             return updated;
         } );
 
-        debouncedSaveMetric( setId, field, value );
+        debouncedSaveMetric( setId, field, cleanValue );
     };
 
     // Used to step-increment standard metric (e.g. +5 lb, -5 lb, +1 rep)
@@ -748,7 +803,14 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
 
     // Used to update cardio duration in minutes (converts to seconds for DB)
     const handleUpdateCardioMinutes = ( setId, valMinutes ) => {
-        const secs = valMinutes === "" ? null : Math.round( Number( valMinutes ) * 60 );
+        let secs = null;
+        if ( valMinutes !== "" && valMinutes !== null && valMinutes !== undefined ) {
+            const numMins = parseFloat( valMinutes );
+            if ( !Number.isNaN( numMins ) ) {
+                secs = Math.max( 0, Math.round( numMins * 60 ) );
+            }
+        }
+
         setWorkoutDetails( ( prev ) => {
             if ( !prev ) return prev;
             const updated = {
@@ -819,6 +881,7 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
                     sets: ( we.sets || [] ).map( ( s ) => ( s.id === setId ? { ...s, setType: nextType } : s ) )
                 }) )
             };
+            workoutDetailsRef.current = updated;
             saveWorkoutDraft( updated );
             return updated;
         } );
@@ -840,13 +903,13 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
             isCompleted: false
         };
 
-        if ( isCardioMovement( ex ) ) {
+        if ( ex?.modality === "DISTANCE_TIME" ) {
             payload = {
                 ...payload,
                 weight: null,
                 reps: null,
                 durationSeconds: previousSet?.durationSeconds ?? 1200, // 20m default
-                distance: previousSet?.distance ?? ( ex?.modality === "DISTANCE_TIME" ? 1.0 : null ),
+                distance: previousSet?.distance ?? 1.0,
                 distanceUnit: previousSet?.distanceUnit ?? ( isMetric ? "km" : "mi" )
             };
         } else if ( ex?.modality === "TIME_DURATION" ) {
@@ -854,7 +917,7 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
                 ...payload,
                 weight: previousSet?.weight ?? null,
                 reps: null,
-                durationSeconds: previousSet?.durationSeconds ?? 60, // 60s hold default
+                durationSeconds: previousSet?.durationSeconds ?? ( isCardioMovement( ex ) ? 1200 : 60 ),
                 distance: null,
                 distanceUnit: null
             };
@@ -882,7 +945,11 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
 
     // Used to delete a specific set w/ confirmation if set holds logged data
     const handleDeleteSet = async ( set ) => {
-        const hasData = set.isCompleted || ( set.weight !== null && set.weight > 0 ) || ( set.reps !== null && set.reps > 0 );
+        const hasData = set.isCompleted ||
+            ( set.weight !== null && set.weight > 0 ) ||
+            ( set.reps !== null && set.reps > 0 ) ||
+            ( set.durationSeconds !== null && set.durationSeconds > 0 ) ||
+            ( set.distance !== null && set.distance > 0 );
         if ( hasData ) {
             const confirmed = await modal.confirm({
                 title: "Delete Set?",
@@ -1160,18 +1227,17 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
 
                                 {/* Set Table Header (Modality Adaptive) */}
                                 <div className="flex items-center gap-1.5 sm:gap-2.5 text-xs font-bold text-slate-400 pb-1.5 border-b border-slate-800">
-                                    <span className="w-8 sm:w-10 text-left pl-1 shrink-0">Set</span>
-                                    {isCardio ? (
-                                        ex.modality === "DISTANCE_TIME" ? (
-                                            <>
-                                                <span className="flex-1 text-center">Distance ({distanceUnit})</span>
-                                                <span className="flex-1 text-center">Time (Mins)</span>
-                                            </>
-                                        ) : (
-                                            <span className="flex-1 text-center">Duration (Minutes)</span>
-                                        )
+                                    {ex.modality === "DISTANCE_TIME" ? (
+                                        <>
+                                            <span className="flex-1 text-center">Distance ({distanceUnit})</span>
+                                            <span className="flex-1 text-center">Time (Mins)</span>
+                                        </>
                                     ) : ex.modality === "TIME_DURATION" ? (
-                                        <span className="flex-1 text-center">Duration (Seconds)</span>
+                                        isCardio ? (
+                                            <span className="flex-1 text-center">Duration (Minutes)</span>
+                                        ) : (
+                                            <span className="flex-1 text-center">Duration (Seconds)</span>
+                                        )
                                     ) : (
                                         <>
                                             <span className="flex-1 text-center">Weight ({weightUnit})</span>
@@ -1219,7 +1285,7 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
                                                     </div>
 
                                                     {/* Modality: WEIGHT_REPS */}
-                                                    {!isCardio && ex.modality === "WEIGHT_REPS" && (
+                                                    {( ex.modality === "WEIGHT_REPS" || ( !ex.modality && !isCardio ) ) && (
                                                         <>
                                                             {/* Weight Input w/ Non-Shrinking Steppers */}
                                                             <div className="flex-1 min-w-0 flex items-center justify-center space-x-1">
@@ -1352,7 +1418,7 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
                                                     )}
 
                                                     {/* Modality: Cardio Distance + Time (Running Distance in Miles/Km & Minutes) */}
-                                                    {isCardio && ex.modality === "DISTANCE_TIME" && (
+                                                    {ex.modality === "DISTANCE_TIME" && (
                                                         <>
                                                             {/* Distance Control */}
                                                             <div className="flex-1 min-w-0 flex items-center justify-center space-x-1">

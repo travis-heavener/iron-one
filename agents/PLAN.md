@@ -274,14 +274,17 @@ To avoid confusion, the database is partitioned into four distinct functional do
   - **Exercise Hot-Swap Modal (`POST /api/workout-exercises/:id/swap`)**: In-session exercise substitution with searchable catalog and keep/reset sets toggle.
   - **Gym Network Resilience Shield (`client/src/utils/offlineSync.js`)**: Real-time `localStorage` draft caching (`ironone_active_workout_draft`) and offline status warning banner protecting workouts from basement Wi-Fi/Tailscale disconnects.
   - **Workout Completion Confetti Celebration (`client/src/utils/confetti.js`)**: Multi-stage `canvas-confetti` particle blast (center explosion, side perimeter cannons, shimmer sparkle shower) and victory haptics upon completing a workout.
-- [ ] **Sub-Phase 6D: Calendar View & Journal Feed**:
-  - Month/week calendar grid with daily workout badges (supporting multiple sessions per date).
-  - Chronological journal stream with date range filtering and "Clone to Today" progressive overload carryover.
+- [x] **Sub-Phase 6D: Calendar View & Journal Feed (Completed)**:
+  - **Interactive Calendar Grid (`client/src/pages/HistoryPage.jsx`)**: 7-column monthly view w/ daily badges, multi-session indicators, and monthly aggregate cards (total workouts, active hours, primary split tag).
+  - **Selected Date Details Drawer**: On-demand drilldown displaying sessions logged on any selected calendar date with full exercise breakdown and sets.
+  - **Chronological Journal Stream**: Journal feed with instant name search, split tag filter chips (`Push`, `Pull`, `Legs`, etc.), and paginated feed loading.
+  - **Progressive Overload Carryover**: 1-tap "Clone to Today" action (`POST /api/workout-entries/:id/clone`) replicating previous exercises and sets as uncompleted target baselines.
+  - **Session Deletion & Re-sequencing**: Destructive confirmation modal and atomic re-sequencing of exercise order.
 
 ### Phase 7: Tailscale Configuration & Ubuntu 26 Deployment
-1. Configure Express to listen on all interfaces (`0.0.0.0`) or bind specifically to the Tailscale interface (`100.x.y.z`).
-2. Provide a `systemd` unit file (`ironone.service`) or `pm2` configuration for persistent background operation on Ubuntu 26.
-3. Add automated database backup script (daily snapshot of SQLite database).
+1. **Tailscale & Network Configuration**: Express server binds to `0.0.0.0` listening on all network interfaces including Tailscale (`100.x.y.z`), with security headers pre-configured for cross-origin LAN/Tailscale access.
+2. **Persistent Background Operation**: Validated in development and production Node.js runtimes (`npm start`, `npm run dev`), ready for daemonization after initial dev burn-in.
+3. **Automated SQLite Online Backups**: Portable, zero-external-dependency automated backup tool (`npm run db:backup` / `scripts/backup.sh` via `scripts/backup.js`) with WAL non-blocking backup execution, size verification, and 14-day snapshot rotation.
 
 ### Phase 8: Future Extensions & Social Features (Post-MVP Roadmap)
 1. **Routine & Template Sharing**:

@@ -9,7 +9,7 @@ import { sendError, sendSuccess } from "../utils/response.js";
 // Used to add exercise to active workout session
 export const addExerciseToWorkout = async ( req, res ) => {
     const { id: workoutEntryId } = req.params;
-    const { exerciseId, initialSets, notes, targetDuration, targetReps, targetWeight } = req.body || {};
+    const { exerciseId, initialSets, notes, targetDistance, targetDistanceUnit, targetDuration, targetReps, targetWeight } = req.body || {};
 
     if ( !workoutEntryId || typeof workoutEntryId !== "string" || workoutEntryId.length > 50 ) {
         return sendError( res, "Workout session not found", "ERR_ENTRY_NOT_FOUND", 404 );
@@ -70,11 +70,22 @@ export const addExerciseToWorkout = async ( req, res ) => {
         // Determine initial set metrics based on exercise modality
         let parsedReps = null;
         let parsedDuration = null;
+        let parsedDistance = null;
+        let parsedDistanceUnit = null;
 
         if ( exercise.modality === "TIME_DURATION" ) {
             parsedDuration = targetDuration ? Math.max( 0, parseInt( targetDuration, 10 ) || 0 ) : null;
         } else if ( exercise.modality === "WEIGHT_REPS" ) {
             parsedReps = targetReps ? Math.max( 0, parseInt( targetReps, 10 ) || 0 ) : null;
+        } else if ( exercise.modality === "DISTANCE_TIME" ) {
+            parsedDuration = targetDuration ? Math.max( 0, parseInt( targetDuration, 10 ) || 0 ) : null;
+            parsedDistance = targetDistance ? Math.max( 0, parseFloat( targetDistance ) || 0 ) : null;
+            if ( targetDistanceUnit && typeof targetDistanceUnit === "string" ) {
+                const unit = targetDistanceUnit.trim().toLowerCase();
+                if ( [ "mi", "km", "m", "yd" ].includes( unit ) ) {
+                    parsedDistanceUnit = unit;
+                }
+            }
         }
 
         const parsedWeight = targetWeight !== undefined && targetWeight !== null
@@ -101,8 +112,8 @@ export const addExerciseToWorkout = async ( req, res ) => {
                         weight: parsedWeight,
                         reps: parsedReps,
                         durationSeconds: parsedDuration,
-                        distance: null,
-                        distanceUnit: null,
+                        distance: parsedDistance,
+                        distanceUnit: parsedDistanceUnit,
                         rpe: null,
                         isCompleted: false
                     });
@@ -218,8 +229,25 @@ export const deleteWorkoutExercise = async ( req, res ) => {
             return sendError( res, "Workout exercise not found", "ERR_WORKOUT_EXERCISE_NOT_FOUND", 404 );
         }
 
-        await prisma.workoutExercise.delete({
-            where: { id }
+        await prisma.$transaction( async ( tx ) => {
+            await tx.workoutExercise.delete({
+                where: { id }
+            });
+
+            // Re-sequence remaining exercises orderIndex sequentially without gaps
+            const remaining = await tx.workoutExercise.findMany({
+                where: { workoutEntryId: workoutExercise.workoutEntryId },
+                orderBy: { orderIndex: "asc" }
+            });
+
+            for ( let i = 0; i < remaining.length; ++i ) {
+                if ( remaining[i].orderIndex !== i ) {
+                    await tx.workoutExercise.update({
+                        where: { id: remaining[i].id },
+                        data: { orderIndex: i }
+                    });
+                }
+            }
         });
 
         return sendSuccess( res, {
@@ -249,6 +277,7 @@ export const swapWorkoutExercise = async ( req, res ) => {
         const workoutExercise = await prisma.workoutExercise.findUnique({
             where: { id },
             include: {
+                exercise: true,
                 workoutEntry: {
                     select: { userId: true }
                 },
@@ -312,6 +341,24 @@ export const swapWorkoutExercise = async ( req, res ) => {
                 await tx.exerciseSet.createMany({
                     data: cleanSets
                 });
+            } else if ( workoutExercise.exercise?.modality !== newExercise.modality ) {
+                // If modality changed while keeping sets, sanitize incompatible fields
+                if ( newExercise.modality === "WEIGHT_REPS" ) {
+                    await tx.exerciseSet.updateMany({
+                        where: { workoutExerciseId: id },
+                        data: { durationSeconds: null, distance: null, distanceUnit: null }
+                    });
+                } else if ( newExercise.modality === "TIME_DURATION" ) {
+                    await tx.exerciseSet.updateMany({
+                        where: { workoutExerciseId: id },
+                        data: { weight: null, reps: null, distance: null, distanceUnit: null }
+                    });
+                } else if ( newExercise.modality === "DISTANCE_TIME" ) {
+                    await tx.exerciseSet.updateMany({
+                        where: { workoutExerciseId: id },
+                        data: { weight: null, reps: null }
+                    });
+                }
             }
 
             const updated = await tx.workoutExercise.update({
