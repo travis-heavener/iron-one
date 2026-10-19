@@ -18,6 +18,9 @@
         "db:backup": "node scripts/backup.js",
         "db:studio": "prisma studio"
     },
+    "engines": {
+        "node": ">=20.17.0"
+    },
     "keywords": [
         "workout",
         "tracker",

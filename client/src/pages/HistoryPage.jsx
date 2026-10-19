@@ -279,21 +279,26 @@ export const HistoryPage = ({ onNavigate }) => {
         return cells;
     }, [ currentMonthDate ] );
 
-    // Monthly summary stats
+    // Monthly summary stats strictly filtered to current calendar month
     const monthStats = useMemo( () => {
         let totalSessions = 0;
         let totalMinutes = 0;
         const splitFreq = {};
 
-        const entries = Object.values( calendarData ).flat();
-        for ( let i = 0; i < entries.length; ++i ) {
-            const item = entries[i];
-            ++totalSessions;
-            if ( item.durationMinutes ) {
-                totalMinutes += item.durationMinutes;
-            }
-            if ( item.splitTag ) {
-                splitFreq[item.splitTag] = ( splitFreq[item.splitTag] || 0 ) + 1;
+        const targetMonthPrefix = `${currentMonthDate.getFullYear()}-${String( currentMonthDate.getMonth() + 1 ).padStart( 2, "0" )}`;
+
+        for ( const [ dateStr, sessionList ] of Object.entries( calendarData ) ) {
+            if ( !dateStr.startsWith( targetMonthPrefix ) ) continue;
+
+            for ( let i = 0; i < sessionList.length; ++i ) {
+                const item = sessionList[i];
+                ++totalSessions;
+                if ( item.durationMinutes ) {
+                    totalMinutes += item.durationMinutes;
+                }
+                if ( item.splitTag ) {
+                    splitFreq[item.splitTag] = ( splitFreq[item.splitTag] || 0 ) + 1;
+                }
             }
         }
 
@@ -311,7 +316,7 @@ export const HistoryPage = ({ onNavigate }) => {
             totalMinutes,
             topSplit
         };
-    }, [ calendarData ] );
+    }, [ calendarData, currentMonthDate ] );
 
     // Navigate month
     const handlePrevMonth = () => {

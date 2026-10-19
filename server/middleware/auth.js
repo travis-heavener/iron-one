@@ -29,6 +29,9 @@ export const authenticateToken = async ( req, res, next ) => {
 
     try {
         const decoded = jwt.verify( token, jwtSecret );
+        if ( !decoded || typeof decoded !== "object" || typeof decoded.id !== "string" ) {
+            return sendError( res, "Invalid authentication token payload", "ERR_INVALID_TOKEN", 403 );
+        }
 
         // Verify user still exists in database
         const user = await prisma.user.findUnique({
