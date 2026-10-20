@@ -613,7 +613,7 @@ export const HistoryPage = ({ onNavigate }) => {
                                         <div className="space-y-1 w-full mt-1 overflow-hidden">
                                             {dayWorkouts.slice( 0, 2 ).map( ( w, idx ) => (
                                                 <div
-                                                    key={idx}
+                                                    key={w.id || idx}
                                                     className="truncate text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-300"
                                                     title={w.name}
                                                 >
@@ -845,7 +845,7 @@ export const HistoryPage = ({ onNavigate }) => {
                         </div>
 
                         {/* Split Filter Chips */}
-                        <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 no-scrollbar">
+                        <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none">
                             {SPLIT_FILTER_OPTIONS.map( ( split ) => (
                                 <button
                                     key={split}

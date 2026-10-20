@@ -99,5 +99,15 @@
         scrollbar-width: thin;
         scrollbar-color: #1e293b transparent;
     }
+
+    /* Hide scrollbars for horizontally scrolling filter chip rows */
+    .scrollbar-none::-webkit-scrollbar {
+        display: none;
+    }
+
+    .scrollbar-none {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
 }
 

@@ -1227,6 +1227,7 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
 
                                 {/* Set Table Header (Modality Adaptive) */}
                                 <div className="flex items-center gap-1.5 sm:gap-2.5 text-xs font-bold text-slate-400 pb-1.5 border-b border-slate-800">
+                                    <span className="w-8 sm:w-10 shrink-0 text-left">Set</span>
                                     {ex.modality === "DISTANCE_TIME" ? (
                                         <>
                                             <span className="flex-1 text-center">Distance ({distanceUnit})</span>
