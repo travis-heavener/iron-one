@@ -1,7 +1,7 @@
 # IronOne Project Handoff & Session Transition Guide
 
 > **Target Audience:** Incoming AI coding agents and human developers resuming development on any device.
-> **Last Updated:** October 21, 2026 (v0.5.0: Weekly Consistency Streak Tracker & Global Theme Selector)
+> **Last Updated:** October 21, 2026 (v0.5.1: Mobile Theme Ordering, Centered Profile Badges & UI Ergonomics)
 
 ---
 
@@ -60,6 +60,10 @@
   - True pitch-black AMOLED (#000000) mode for zero gym floor glare and battery savings.
   - Zero-flash client theme persistence via `localStorage` and dynamic root CSS variable cascade.
   - Resolved desktop horizontal scroll chevron overlay clipping across routine, catalog, and active workout pickers by converting filter chip containers to inline flex sibling layouts.
+- **Sub-Phase 6H / v0.5.1 (Mobile Theme Ordering, Centered Profile Badges & UI Ergonomics):**
+  - Theme sequence reordering and responsive 2-column flow (`sm:grid-flow-col sm:grid-rows-4`) ensuring AMOLED themes stay grouped in column 2 on desktop and themes follow desktop order sequentially on single-column mobile viewports.
+  - Centered responsive badge flex wrap across profile avatar header and weekly consistency streak cards on small mobile screens.
+  - Simplified profile sign-out button copy to "Sign Out".
 
 ---
 

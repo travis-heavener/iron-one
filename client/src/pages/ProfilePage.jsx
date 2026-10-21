@@ -163,8 +163,8 @@ export const ProfilePage = ({ onOpenTour }) => {
             )}
 
             {/* Avatar & Header Card */}
-            <div className="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl flex items-center space-x-5">
-                <div className="relative group">
+            <div className="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-5">
+                <div className="relative group shrink-0">
                     {user?.avatarUrl ? (
                         <img
                             src={user.avatarUrl}
@@ -203,7 +203,7 @@ export const ProfilePage = ({ onOpenTour }) => {
                     <p className="text-xs text-slate-400 mt-0.5">
                         Member since {new Date( user?.createdAt || Date.now() ).toLocaleDateString()}
                     </p>
-                    <div className="mt-2 flex items-center space-x-2">
+                    <div className="mt-2.5 flex flex-wrap items-center justify-center sm:justify-start gap-2">
                         <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                             <Shield className="w-3 h-3" />
                             <span>Argon2id Secured</span>
@@ -220,9 +220,9 @@ export const ProfilePage = ({ onOpenTour }) => {
 
             {/* Weekly Consistency & Streak Section */}
             <div className="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-4">
-                <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center space-x-2.5">
-                        <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <div className="flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left gap-3">
+                    <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
                             <Flame className="w-5 h-5 fill-amber-400/40 stroke-[2.5]" />
                         </div>
                         <div>
@@ -234,19 +234,21 @@ export const ProfilePage = ({ onOpenTour }) => {
                             </p>
                         </div>
                     </div>
-                    {streakData?.hasWorkedOutThisWeek ? (
-                        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                            Active Streak
-                        </span>
-                    ) : streakData?.currentStreak > 0 ? (
-                        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
-                            Pending This Week
-                        </span>
-                    ) : (
-                        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">
-                            0 Weeks
-                        </span>
-                    )}
+                    <div className="flex items-center justify-center shrink-0">
+                        {streakData?.hasWorkedOutThisWeek ? (
+                            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                Active Streak
+                            </span>
+                        ) : streakData?.currentStreak > 0 ? (
+                            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                                Pending This Week
+                            </span>
+                        ) : (
+                            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                                0 Weeks
+                            </span>
+                        )}
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
@@ -411,7 +413,7 @@ export const ProfilePage = ({ onOpenTour }) => {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 sm:grid-flow-col sm:grid-rows-4 gap-3">
                     {availableThemes.map( ( t ) => {
                         const isSelected = theme === t.id;
                         return (
@@ -476,9 +478,9 @@ export const ProfilePage = ({ onOpenTour }) => {
 
             {/* App Tour & Feature Walkthrough */}
             {onOpenTour && (
-                <div className="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl flex items-center justify-between gap-4">
+                <div className="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left gap-4">
                     <div>
-                        <h3 className="text-sm font-bold text-white flex items-center space-x-1.5">
+                        <h3 className="text-sm font-bold text-white flex items-center justify-center sm:justify-start space-x-1.5">
                             <Sparkles className="w-4 h-4 text-emerald-400" />
                             <span>Introduction & Feature Tour</span>
                         </h3>
@@ -504,7 +506,7 @@ export const ProfilePage = ({ onOpenTour }) => {
                     className="w-full py-3.5 px-4 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold text-sm transition flex items-center justify-center space-x-2 active:scale-[0.98]"
                 >
                     <LogOut className="w-4 h-4" />
-                    <span>Sign Out of IronOne</span>
+                    <span>Sign Out</span>
                 </button>
             </div>
         </div>

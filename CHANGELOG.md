@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.5.1] - 2026-10-21
+- Fixed: Theme selector ordering on mobile viewports so themes follow left column first then right column, grouping all AMOLED options together
+- Fixed: Centering of profile badges (Argon2id Secured, streak badges) on mobile screens when wrapping to multiple lines
+- Fixed: Consistency streak header card badge centering and responsive vertical alignment on mobile devices
+- Changed: Simplified profile logout button copy to "Sign Out"
+
 ## [0.5.0] - 2026-10-21
 - Added: Weekly consistency streak tracker on Dashboard (replacing unit system readout) and Profile page with Sunday 12:00 AM week boundary
 - Added: Active vs Pending streak status indicators and Sunday–Saturday 7-day visual activity log strip

@@ -1,6 +1,6 @@
 {
     "name": "ironone",
-    "version": "0.5.0",
+    "version": "0.5.1",
     "description": "Self-hosted, frictionless workout tracking SPA for progressive overload",
     "type": "module",
     "main": "server/server.js",

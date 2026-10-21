@@ -15,19 +15,33 @@ export const AVAILABLE_THEMES = [
         badge: "Default"
     },
     {
+        id: "crimson",
+        name: "Crimson Forge",
+        description: "Deep slate & crimson red",
+        backgroundHex: "#090d16",
+        accentHex: "#f43f5e"
+    },
+    {
+        id: "cobalt",
+        name: "Electric Cobalt",
+        description: "Deep slate & oceanic blue",
+        backgroundHex: "#090d16",
+        accentHex: "#0ea5e9"
+    },
+    {
+        id: "violet",
+        name: "Cyber Violet",
+        description: "Deep slate & synth purple",
+        backgroundHex: "#090d16",
+        accentHex: "#a855f7"
+    },
+    {
         id: "oled",
         name: "OLED Stealth",
         description: "Pitch black & gym emerald",
         backgroundHex: "#000000",
         accentHex: "#10b981",
         badge: "AMOLED"
-    },
-    {
-        id: "crimson",
-        name: "Crimson Forge",
-        description: "Deep slate & crimson red",
-        backgroundHex: "#090d16",
-        accentHex: "#f43f5e"
     },
     {
         id: "oled-crimson",
@@ -38,26 +52,12 @@ export const AVAILABLE_THEMES = [
         badge: "AMOLED"
     },
     {
-        id: "cobalt",
-        name: "Electric Cobalt",
-        description: "Deep slate & oceanic blue",
-        backgroundHex: "#090d16",
-        accentHex: "#0ea5e9"
-    },
-    {
         id: "oled-cobalt",
         name: "OLED Cobalt",
         description: "Pitch black & oceanic blue",
         backgroundHex: "#000000",
         accentHex: "#0ea5e9",
         badge: "AMOLED"
-    },
-    {
-        id: "violet",
-        name: "Cyber Violet",
-        description: "Deep slate & synth purple",
-        backgroundHex: "#090d16",
-        accentHex: "#a855f7"
     },
     {
         id: "amber",
