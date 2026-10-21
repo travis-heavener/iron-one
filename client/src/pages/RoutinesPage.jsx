@@ -809,9 +809,6 @@ export const RoutinesPage = ({ onNavigate }) => {
                                         <h4 className="text-sm font-bold text-white">
                                             Planned Exercises ({formExercises.length})
                                         </h4>
-                                        <p className="text-[11px] text-slate-400">
-                                            Ordered movement sequence with target sets and loads
-                                        </p>
                                     </div>
                                     <button
                                         type="button"
