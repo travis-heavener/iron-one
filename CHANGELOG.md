@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.4.0] - 2026-10-21
+- Added: Interactive multi-slide onboarding walkthrough tour covering core tracking pillars, offline resilience, and overload tracking
+- Added: Replayable feature tour launcher accessible anytime from Dashboard greeting and Profile settings
+
 ## [0.3.0] - 2026-10-21
 - Added: Desktop horizontal scroll chevrons and mouse wheel scrolling translation for category and filter chips
 - Added: Color-coded modality indicators (Emerald Weight & Reps, Sky Time Duration holds, Amber Distance & Time cardio)

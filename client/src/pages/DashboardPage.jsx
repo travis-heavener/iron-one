@@ -8,7 +8,8 @@ import {
     Dumbbell,
     Layers,
     Play,
-    Plus
+    Plus,
+    Sparkles
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
@@ -17,7 +18,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useModal } from "../context/ModalContext.jsx";
 
 // Used to render main dashboard overview and quick actions
-export const DashboardPage = ({ onNavigate }) => {
+export const DashboardPage = ({ onNavigate, onOpenTour }) => {
     const { activeWorkout, refreshActiveWorkout, setActiveWorkout, user } = useAuth();
     const modal = useModal();
     const [ startingAdHoc, setStartingAdHoc ] = useState( false );
@@ -86,7 +87,7 @@ export const DashboardPage = ({ onNavigate }) => {
     return (
         <div className="space-y-6">
             {/* Header Greeting */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
                 <div>
                     <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
                         Welcome back, <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">{user?.username}</span>
@@ -95,6 +96,18 @@ export const DashboardPage = ({ onNavigate }) => {
                         Ready to push your limits today?
                     </p>
                 </div>
+                {onOpenTour && (
+                    <button
+                        type="button"
+                        onClick={onOpenTour}
+                        className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white text-xs font-semibold flex items-center space-x-1.5 transition shrink-0 cursor-pointer shadow-sm"
+                        title="Open Introduction & Feature Tour"
+                    >
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="hidden sm:inline">Feature Tour</span>
+                        <span className="sm:hidden">Tour</span>
+                    </button>
+                )}
             </div>
 
             {/* Active Workout Spotlight (if active session running) */}
@@ -199,10 +212,22 @@ export const DashboardPage = ({ onNavigate }) => {
                         Loading recent workouts...
                     </div>
                 ) : recentWorkouts.length === 0 ? (
-                    <div className="p-8 rounded-3xl bg-slate-900/40 border border-dashed border-slate-800 text-center">
-                        <Dumbbell className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                        <p className="text-sm font-medium text-slate-400">No workouts logged yet</p>
-                        <p className="text-xs text-slate-500 mt-1">Start your first workout above to begin tracking</p>
+                    <div className="p-8 rounded-3xl bg-slate-900/40 border border-dashed border-slate-800 text-center space-y-3">
+                        <Dumbbell className="w-8 h-8 text-slate-600 mx-auto" />
+                        <div>
+                            <p className="text-sm font-medium text-slate-300">No workouts logged yet</p>
+                            <p className="text-xs text-slate-500 mt-1">Start your first workout above or take the tour to learn the ropes</p>
+                        </div>
+                        {onOpenTour && (
+                            <button
+                                type="button"
+                                onClick={onOpenTour}
+                                className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-emerald-400 text-xs font-bold border border-emerald-500/20 transition cursor-pointer"
+                            >
+                                <Sparkles className="w-3.5 h-3.5" />
+                                <span>Take Quick Tour</span>
+                            </button>
+                        )}
                     </div>
                 ) : (
                     <div className="space-y-2.5">

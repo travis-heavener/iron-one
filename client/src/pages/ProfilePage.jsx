@@ -8,7 +8,8 @@ import {
     Check,
     Loader2,
     LogOut,
-    Shield
+    Shield,
+    Sparkles
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 
@@ -16,7 +17,7 @@ import { userApi } from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
 // Used to render profile management and settings
-export const ProfilePage = () => {
+export const ProfilePage = ({ onOpenTour }) => {
     const { logout, refreshProfile, user } = useAuth();
     const fileInputRef = useRef( null );
 
@@ -268,6 +269,28 @@ export const ProfilePage = () => {
                     )}
                 </button>
             </form>
+
+            {/* App Tour & Feature Walkthrough */}
+            {onOpenTour && (
+                <div className="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl flex items-center justify-between gap-4">
+                    <div>
+                        <h3 className="text-sm font-bold text-white flex items-center space-x-1.5">
+                            <Sparkles className="w-4 h-4 text-emerald-400" />
+                            <span>Introduction & Feature Tour</span>
+                        </h3>
+                        <p className="text-xs text-slate-400 mt-1">
+                            Review core features: progressive overload, tactile logging, routines, and offline resilience.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onOpenTour}
+                        className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/20 text-xs font-bold transition shrink-0 cursor-pointer"
+                    >
+                        Replay Tour
+                    </button>
+                </div>
+            )}
 
             {/* Logout Action */}
             <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800/80">

@@ -1199,8 +1199,9 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
                                         <button
                                             type="button"
                                             onClick={() => handleOpenSwap( we, ex )}
-                                            className="p-2 rounded-xl text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 transition cursor-pointer"
-                                            title="Hot-Swap Movement"
+                                            className="p-2 rounded-xl text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 transition cursor-pointer active:scale-95"
+                                            title="Hot-Swap Movement (Replace with alternative)"
+                                            aria-label="Hot-swap movement"
                                         >
                                             <ArrowLeftRight className="w-4 h-4" />
                                         </button>
@@ -1289,16 +1290,17 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
                                                         <button
                                                             type="button"
                                                             onClick={() => handleCycleSetType( set.id, set.setType )}
-                                                            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-xs font-black transition cursor-pointer flex items-center justify-center ${
+                                                            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-xs font-black transition cursor-pointer flex items-center justify-center active:scale-95 ${
                                                                 set.setType === "WARMUP"
                                                                     ? "bg-amber-500/20 text-amber-400 border border-amber-500/40"
                                                                     : set.setType === "DROP"
                                                                         ? "bg-purple-500/20 text-purple-400 border border-purple-500/40"
                                                                         : set.setType === "FAILURE"
                                                                             ? "bg-rose-500/20 text-rose-400 border border-rose-500/40"
-                                                                            : "bg-slate-800/90 text-slate-300 hover:text-white"
+                                                                            : "bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/60 hover:border-slate-500"
                                                             }`}
-                                                            title={`Type: ${set.setType || "NORMAL"} (Tap to change)`}
+                                                            title={`Set type: ${set.setType || "NORMAL"} (Tap to cycle: Normal -> Warmup -> Drop -> Failure)`}
+                                                            aria-label={`Cycle set ${set.setNumber} type`}
                                                         >
                                                             {set.setType === "WARMUP" ? `W${set.setNumber}` : set.setType === "DROP" ? `D${set.setNumber}` : set.setType === "FAILURE" ? `F${set.setNumber}` : set.setNumber}
                                                         </button>

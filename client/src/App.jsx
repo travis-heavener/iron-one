@@ -7,6 +7,7 @@ import { Dumbbell, Loader2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
 import { Layout } from "./components/Layout.jsx";
+import { OnboardingModal } from "./components/OnboardingModal.jsx";
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
 import { ModalProvider } from "./context/ModalContext.jsx";
 import { ActiveWorkoutPage } from "./pages/ActiveWorkoutPage.jsx";
@@ -36,9 +37,31 @@ const getTabFromLocation = () => {
 
 // Used to render authenticated workspace or login/register flows
 const AppContent = () => {
-    const { isAuthenticated, loading, refreshActiveWorkout } = useAuth();
+    const { isAuthenticated, loading, refreshActiveWorkout, user } = useAuth();
     const [ authMode, setAuthMode ] = useState( "login" );
     const [ activeTab, setActiveTab ] = useState( getTabFromLocation );
+    const [ isOnboardingOpen, setIsOnboardingOpen ] = useState( false );
+
+    // Check if user hasn't seen the introduction walkthrough
+    useEffect( () => {
+        if ( isAuthenticated && user?.id ) {
+            const hasSeen = localStorage.getItem( `ironone_onboarding_seen_${user.id}` );
+            if ( !hasSeen ) {
+                setIsOnboardingOpen( true );
+            }
+        }
+    }, [ isAuthenticated, user?.id ] );
+
+    const handleCloseOnboarding = () => {
+        if ( user?.id ) {
+            localStorage.setItem( `ironone_onboarding_seen_${user.id}`, "true" );
+        }
+        setIsOnboardingOpen( false );
+    };
+
+    const handleOpenOnboarding = () => {
+        setIsOnboardingOpen( true );
+    };
 
     // Synchronize active tab w/ browser history (supports Back/Forward buttons)
     const handleSelectTab = ( newTab, push = true ) => {
@@ -101,14 +124,22 @@ const AppContent = () => {
 
     // Authenticated application layout
     return (
-        <Layout activeTab={activeTab} onSelectTab={handleSelectTab}>
-            {activeTab === "dashboard" && <DashboardPage onNavigate={handleSelectTab} />}
-            {activeTab === "routines" && <RoutinesPage onNavigate={handleSelectTab} />}
-            {activeTab === "active" && <ActiveWorkoutPage onNavigate={handleSelectTab} />}
-            {activeTab === "history" && <HistoryPage onNavigate={handleSelectTab} />}
-            {activeTab === "exercises" && <ExercisesPage onNavigate={handleSelectTab} />}
-            {activeTab === "profile" && <ProfilePage onNavigate={handleSelectTab} />}
-        </Layout>
+        <>
+            <Layout activeTab={activeTab} onSelectTab={handleSelectTab}>
+                {activeTab === "dashboard" && (
+                    <DashboardPage onNavigate={handleSelectTab} onOpenTour={handleOpenOnboarding} />
+                )}
+                {activeTab === "routines" && <RoutinesPage onNavigate={handleSelectTab} />}
+                {activeTab === "active" && <ActiveWorkoutPage onNavigate={handleSelectTab} />}
+                {activeTab === "history" && <HistoryPage onNavigate={handleSelectTab} />}
+                {activeTab === "exercises" && <ExercisesPage onNavigate={handleSelectTab} />}
+                {activeTab === "profile" && (
+                    <ProfilePage onNavigate={handleSelectTab} onOpenTour={handleOpenOnboarding} />
+                )}
+            </Layout>
+
+            <OnboardingModal isOpen={isOnboardingOpen} onClose={handleCloseOnboarding} />
+        </>
     );
 };
 

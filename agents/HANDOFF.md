@@ -1,7 +1,7 @@
 # IronOne Project Handoff & Session Transition Guide
 
 > **Target Audience:** Incoming AI coding agents and human developers resuming development on any device.
-> **Last Updated:** October 21, 2026 (v0.3.0: Catalog Synchronization, Modality Refinement & Desktop Ergonomics)
+> **Last Updated:** October 21, 2026 (v0.4.0: Introduction Walkthrough, Footer Branding & Version Milestone)
 
 ---
 
@@ -47,6 +47,10 @@
   - Live workout table headers distinguishing hold durations from cardio distance and pace.
   - Custom exercise modal equipped with descriptive cards detailing tracked metrics.
   - Idempotent, non-destructive catalog sync script (`server/seeds/seed.js` via `npm run db:seed`) expanding master movements to 74 standard exercises without dropping tables or altering user data.
+- **Sub-Phase 6F (Onboarding Tour & Ergonomics):**
+  - Interactive multi-slide onboarding walkthrough modal ([`OnboardingModal.jsx`](file:///home/travis/Documents/Projects/IronOne/client/src/components/OnboardingModal.jsx)) automatically welcoming new users and replayable anytime from the Dashboard and Profile pages.
+  - Routine blueprint editor input ergonomics: enlarged tactile touch targets (~40px) with centered bold monospace typography while strictly preserving layout density.
+  - Global application version and copyright notice footer across all authenticated screens and authentication gateways.
 
 ---
 
