@@ -138,6 +138,10 @@ export const workoutApi = {
         const query = new URLSearchParams( params ).toString();
         return apiRequest( `/api/workout-entries/calendar${query ? `?${query}` : ""}` );
     },
+    getStreak: ( timezoneOffset ) => {
+        const query = timezoneOffset !== undefined ? `?timezoneOffset=${encodeURIComponent( timezoneOffset )}` : "";
+        return apiRequest( `/api/workout-entries/streak${query}` );
+    },
     getWorkoutById: ( id ) => apiRequest( `/api/workout-entries/${id}` ),
     updateWorkout: ( id, entryData ) => apiRequest( `/api/workout-entries/${id}`, { method: "PUT", body: entryData } ),
     completeWorkout: ( id, completeData = {} ) => apiRequest( `/api/workout-entries/${id}/complete`, { method: "POST", body: completeData } ),

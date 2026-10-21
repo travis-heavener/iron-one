@@ -1722,11 +1722,11 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
                                 />
                             </div>
 
-                            <div className="relative flex items-center group">
+                            <div className="flex items-center space-x-1 w-full">
                                 <button
                                     type="button"
                                     onClick={() => handleScrollContainer( swapCategoryScrollRef, -1 )}
-                                    className="hidden md:flex absolute -left-2 z-10 w-6 h-6 rounded-full bg-slate-800/95 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white items-center justify-center shadow-md transition opacity-80 hover:opacity-100 cursor-pointer"
+                                    className="hidden md:flex shrink-0 w-6 h-6 rounded-full bg-slate-800/90 hover:bg-slate-700 border border-slate-700/80 text-slate-300 hover:text-white items-center justify-center shadow-sm transition cursor-pointer"
                                     aria-label="Scroll categories left"
                                 >
                                     <ChevronLeft className="w-3.5 h-3.5" />
@@ -1734,7 +1734,7 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
                                 <div
                                     ref={swapCategoryScrollRef}
                                     onWheel={handleWheelHorizontal}
-                                    className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none scroll-smooth w-full px-1"
+                                    className="flex-1 min-w-0 flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none scroll-smooth px-0.5"
                                 >
                                     {PICKER_CATEGORIES.map( ( cat ) => (
                                         <button
@@ -1754,7 +1754,7 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
                                 <button
                                     type="button"
                                     onClick={() => handleScrollContainer( swapCategoryScrollRef, 1 )}
-                                    className="hidden md:flex absolute -right-2 z-10 w-6 h-6 rounded-full bg-slate-800/95 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white items-center justify-center shadow-md transition opacity-80 hover:opacity-100 cursor-pointer"
+                                    className="hidden md:flex shrink-0 w-6 h-6 rounded-full bg-slate-800/90 hover:bg-slate-700 border border-slate-700/80 text-slate-300 hover:text-white items-center justify-center shadow-sm transition cursor-pointer"
                                     aria-label="Scroll categories right"
                                 >
                                     <ChevronRight className="w-3.5 h-3.5" />
@@ -1844,11 +1844,11 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
                                 />
                             </div>
 
-                            <div className="relative flex items-center group">
+                            <div className="flex items-center space-x-1 w-full">
                                 <button
                                     type="button"
                                     onClick={() => handleScrollContainer( pickerCategoryScrollRef, -1 )}
-                                    className="hidden md:flex absolute -left-2 z-10 w-6 h-6 rounded-full bg-slate-800/95 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white items-center justify-center shadow-md transition opacity-80 hover:opacity-100 cursor-pointer"
+                                    className="hidden md:flex shrink-0 w-6 h-6 rounded-full bg-slate-800/90 hover:bg-slate-700 border border-slate-700/80 text-slate-300 hover:text-white items-center justify-center shadow-sm transition cursor-pointer"
                                     aria-label="Scroll categories left"
                                 >
                                     <ChevronLeft className="w-3.5 h-3.5" />
@@ -1856,7 +1856,7 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
                                 <div
                                     ref={pickerCategoryScrollRef}
                                     onWheel={handleWheelHorizontal}
-                                    className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none scroll-smooth w-full px-1"
+                                    className="flex-1 min-w-0 flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none scroll-smooth px-0.5"
                                 >
                                     {PICKER_CATEGORIES.map( ( cat ) => (
                                         <button
@@ -1876,7 +1876,7 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
                                 <button
                                     type="button"
                                     onClick={() => handleScrollContainer( pickerCategoryScrollRef, 1 )}
-                                    className="hidden md:flex absolute -right-2 z-10 w-6 h-6 rounded-full bg-slate-800/95 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white items-center justify-center shadow-md transition opacity-80 hover:opacity-100 cursor-pointer"
+                                    className="hidden md:flex shrink-0 w-6 h-6 rounded-full bg-slate-800/90 hover:bg-slate-700 border border-slate-700/80 text-slate-300 hover:text-white items-center justify-center shadow-sm transition cursor-pointer"
                                     aria-label="Scroll categories right"
                                 >
                                     <ChevronRight className="w-3.5 h-3.5" />

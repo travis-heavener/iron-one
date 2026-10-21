@@ -321,11 +321,11 @@ export const ExercisesPage = ({ onNavigate }) => {
 
             {/* Muscle Category Filter Chips (Desktop & Mobile Scrollable) */}
             <div className="space-y-2">
-                <div className="relative flex items-center group">
+                <div className="flex items-center space-x-1.5 w-full">
                     <button
                         type="button"
                         onClick={() => handleScrollContainer( categoryScrollRef, -1 )}
-                        className="hidden md:flex absolute -left-2 z-10 w-7 h-7 rounded-full bg-slate-800/95 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white items-center justify-center shadow-lg transition opacity-80 hover:opacity-100 cursor-pointer"
+                        className="hidden md:flex shrink-0 w-7 h-7 rounded-full bg-slate-800/90 hover:bg-slate-700 border border-slate-700/80 text-slate-300 hover:text-white items-center justify-center shadow-sm transition cursor-pointer"
                         aria-label="Scroll categories left"
                     >
                         <ChevronLeft className="w-3.5 h-3.5" />
@@ -333,7 +333,7 @@ export const ExercisesPage = ({ onNavigate }) => {
                     <div
                         ref={categoryScrollRef}
                         onWheel={handleWheelHorizontal}
-                        className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none scroll-smooth w-full px-1"
+                        className="flex-1 min-w-0 flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none scroll-smooth px-0.5"
                     >
                         {CATEGORIES.map( ( cat ) => (
                             <button
@@ -353,7 +353,7 @@ export const ExercisesPage = ({ onNavigate }) => {
                     <button
                         type="button"
                         onClick={() => handleScrollContainer( categoryScrollRef, 1 )}
-                        className="hidden md:flex absolute -right-2 z-10 w-7 h-7 rounded-full bg-slate-800/95 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white items-center justify-center shadow-lg transition opacity-80 hover:opacity-100 cursor-pointer"
+                        className="hidden md:flex shrink-0 w-7 h-7 rounded-full bg-slate-800/90 hover:bg-slate-700 border border-slate-700/80 text-slate-300 hover:text-white items-center justify-center shadow-sm transition cursor-pointer"
                         aria-label="Scroll categories right"
                     >
                         <ChevronRight className="w-3.5 h-3.5" />
@@ -361,11 +361,11 @@ export const ExercisesPage = ({ onNavigate }) => {
                 </div>
 
                 {/* Modality Chips */}
-                <div className="relative flex items-center group">
+                <div className="flex items-center space-x-1 w-full">
                     <button
                         type="button"
                         onClick={() => handleScrollContainer( modalityScrollRef, -1 )}
-                        className="hidden md:flex absolute -left-2 z-10 w-6 h-6 rounded-full bg-slate-800/95 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white items-center justify-center shadow-md transition opacity-80 hover:opacity-100 cursor-pointer"
+                        className="hidden md:flex shrink-0 w-6 h-6 rounded-full bg-slate-800/90 hover:bg-slate-700 border border-slate-700/80 text-slate-300 hover:text-white items-center justify-center shadow-sm transition cursor-pointer"
                         aria-label="Scroll modalities left"
                     >
                         <ChevronLeft className="w-3 h-3" />
@@ -373,7 +373,7 @@ export const ExercisesPage = ({ onNavigate }) => {
                     <div
                         ref={modalityScrollRef}
                         onWheel={handleWheelHorizontal}
-                        className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none scroll-smooth w-full px-1"
+                        className="flex-1 min-w-0 flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none scroll-smooth px-0.5"
                     >
                         {MODALITIES.map( ( m ) => (
                             <button
@@ -393,7 +393,7 @@ export const ExercisesPage = ({ onNavigate }) => {
                     <button
                         type="button"
                         onClick={() => handleScrollContainer( modalityScrollRef, 1 )}
-                        className="hidden md:flex absolute -right-2 z-10 w-6 h-6 rounded-full bg-slate-800/95 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white items-center justify-center shadow-md transition opacity-80 hover:opacity-100 cursor-pointer"
+                        className="hidden md:flex shrink-0 w-6 h-6 rounded-full bg-slate-800/90 hover:bg-slate-700 border border-slate-700/80 text-slate-300 hover:text-white items-center justify-center shadow-sm transition cursor-pointer"
                         aria-label="Scroll modalities right"
                     >
                         <ChevronRight className="w-3 h-3" />

@@ -10,6 +10,7 @@ import { Layout } from "./components/Layout.jsx";
 import { OnboardingModal } from "./components/OnboardingModal.jsx";
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
 import { ModalProvider } from "./context/ModalContext.jsx";
+import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { ActiveWorkoutPage } from "./pages/ActiveWorkoutPage.jsx";
 import { DashboardPage } from "./pages/DashboardPage.jsx";
 import { ExercisesPage } from "./pages/ExercisesPage.jsx";
@@ -146,11 +147,13 @@ const AppContent = () => {
 // Root provider wrapper
 export const App = () => {
     return (
-        <AuthProvider>
-            <ModalProvider>
-                <AppContent />
-            </ModalProvider>
-        </AuthProvider>
+        <ThemeProvider>
+            <AuthProvider>
+                <ModalProvider>
+                    <AppContent />
+                </ModalProvider>
+            </AuthProvider>
+        </ThemeProvider>
     );
 };
 

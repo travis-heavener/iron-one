@@ -14,6 +14,7 @@ import {
     getCalendarWorkouts,
     getWorkoutEntries,
     getWorkoutEntryById,
+    getWorkoutStreak,
     updateWorkoutEntry
 } from "../controllers/workoutController.js";
 import { addExerciseToWorkout } from "../controllers/workoutExerciseController.js";
@@ -27,6 +28,7 @@ router.use( authenticateToken );
 // Specific action routes (must precede /:id)
 router.get( "/active", getActiveWorkout );
 router.get( "/calendar", getCalendarWorkouts );
+router.get( "/streak", getWorkoutStreak );
 
 // General collection routes
 router.get( "/", getWorkoutEntries );

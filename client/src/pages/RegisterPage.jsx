@@ -176,7 +176,7 @@ export const RegisterPage = ({ onSwitchToLogin }) => {
 
                 {/* Application Version & Copyright Footer */}
                 <div className="text-center text-[11px] text-slate-600 font-medium select-none">
-                    <p>© 2026 IronOne • v0.4.0</p>
+                    <p>© 2026 IronOne • v0.5.0</p>
                 </div>
             </div>
         </div>

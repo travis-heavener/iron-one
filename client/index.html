@@ -7,6 +7,16 @@
         <meta name="description" content="IronOne — Tactile, frictionless workout tracker for progressive overload" />
         <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6.5 6.5 11 11'/><path d='m21 21-1-1'/><path d='m3 3 1 1'/><path d='m18 22 4-4'/><path d='m2 6 4-4'/><path d='m3 10 7-7'/><path d='m14 21 7-7'/></svg>" />
         <title>IronOne — Workout Tracker</title>
+        <script>
+            try {
+                var t = localStorage.getItem("ironone_theme");
+                if (t && t !== "emerald") document.documentElement.setAttribute("data-theme", t);
+                if (t && t.indexOf("oled") === 0) {
+                    var m = document.querySelector('meta[name="theme-color"]');
+                    if (m) m.setAttribute("content", "#000000");
+                }
+            } catch (e) {}
+        </script>
     </head>
     <body class="bg-slate-950 text-slate-100 antialiased selection:bg-emerald-500/30 selection:text-emerald-200 h-full overflow-hidden">
         <div id="root"></div>

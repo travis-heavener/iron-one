@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.5.0] - 2026-10-21
+- Added: Weekly consistency streak tracker on Dashboard (replacing unit system readout) and Profile page with Sunday 12:00 AM week boundary
+- Added: Active vs Pending streak status indicators and Sunday–Saturday 7-day visual activity log strip
+- Added: All-time longest weekly streak calculation and this-week workout completion metrics
+- Added: Global theme selector on Profile page featuring 8 curated gym aesthetics (Iron Emerald, OLED Stealth, Crimson Forge, OLED Crimson, Electric Cobalt, OLED Cobalt, Cyber Violet, Amber Volt)
+- Added: Zero-flash theme persistence using client localStorage and dynamic root CSS variable remapping
+- Added: OLED AMOLED pure black (#000000) modes for reduced gym floor glare and battery optimization
+- Improved: Initial day indicator highlight on weekly streak tracker to render instantaneously before network data resolves
+- Fixed: Desktop horizontal scroll navigation chevrons overlapping filter pill chips across routine, catalog, and active workout pickers
+
 ## [0.4.0] - 2026-10-21
 - Added: Interactive multi-slide onboarding walkthrough tour covering core tracking pillars, offline resilience, and overload tracking
 - Added: Replayable feature tour launcher accessible anytime from Dashboard greeting and Profile settings

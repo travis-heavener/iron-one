@@ -6,6 +6,7 @@
 import {
     ChevronRight,
     Dumbbell,
+    Flame,
     Layers,
     Play,
     Plus,
@@ -25,6 +26,8 @@ export const DashboardPage = ({ onNavigate, onOpenTour }) => {
     const [ recentWorkouts, setRecentWorkouts ] = useState( [] );
     const [ loadingRecent, setLoadingRecent ] = useState( true );
     const [ totalCount, setTotalCount ] = useState( 0 );
+    const [ streakData, setStreakData ] = useState( null );
+    const [ loadingStreak, setLoadingStreak ] = useState( true );
     const [ storageHost, setStorageHost ] = useState( () => (
         typeof window !== "undefined" ? window.location.hostname || "localhost" : "localhost"
     ));
@@ -42,6 +45,21 @@ export const DashboardPage = ({ onNavigate, onOpenTour }) => {
             }
         };
 
+        const fetchStreak = async () => {
+            try {
+                const timezoneOffset = new Date().getTimezoneOffset();
+                const data = await workoutApi.getStreak( timezoneOffset );
+                setStreakData( data );
+                if ( data?.totalWorkouts !== undefined ) {
+                    setTotalCount( data.totalWorkouts );
+                }
+            } catch ( err ) {
+                console.error( "[Dashboard] Failed to fetch weekly streak:", err );
+            } finally {
+                setLoadingStreak( false );
+            }
+        };
+
         const fetchSystemHost = async () => {
             try {
                 const health = await systemApi.getHealth();
@@ -54,6 +72,7 @@ export const DashboardPage = ({ onNavigate, onOpenTour }) => {
         };
 
         fetchRecent();
+        fetchStreak();
         fetchSystemHost();
     }, [] );
 
@@ -179,10 +198,58 @@ export const DashboardPage = ({ onNavigate, onOpenTour }) => {
                     <div className="text-xs text-slate-400 font-medium">Total Workouts</div>
                     <div className="text-2xl font-bold text-white mt-1">{totalCount}</div>
                 </div>
-                <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/70">
-                    <div className="text-xs text-slate-400 font-medium">Unit System</div>
-                    <div className="text-2xl font-bold text-emerald-400 mt-1 capitalize">
-                        {user?.unitPreference || "Imperial"}
+                {/* Weekly Streak Tracker (Replaces Unit System readout) */}
+                <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/70 relative overflow-hidden flex flex-col justify-between">
+                    <div>
+                        <div className="flex items-center justify-between">
+                            <div className="text-xs text-slate-400 font-medium flex items-center space-x-1.5">
+                                <Flame className={`w-3.5 h-3.5 ${streakData?.currentStreak > 0 ? "text-amber-400 fill-amber-400/40" : "text-slate-500"}`} />
+                                <span>Weekly Streak</span>
+                            </div>
+                            {streakData?.hasWorkedOutThisWeek ? (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                    Active
+                                </span>
+                            ) : streakData?.currentStreak > 0 ? (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                                    Pending
+                                </span>
+                            ) : null}
+                        </div>
+                        <div className="flex items-baseline space-x-1.5 mt-1">
+                            <div className="text-2xl font-bold text-white tracking-tight">
+                                {loadingStreak ? "—" : ( streakData?.currentStreak ?? 0 )}
+                            </div>
+                            <span className="text-xs font-semibold text-slate-400">
+                                {( streakData?.currentStreak === 1 ) ? "week" : "weeks"}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* 7-day mini dot strip starting on Sunday */}
+                    <div className="mt-2 pt-2 border-t border-slate-800/60 flex items-center justify-between">
+                        {[ "S", "M", "T", "W", "T", "F", "S" ].map( ( dayLetter, idx ) => {
+                            const currentDayIndex = streakData?.currentDayOfWeek !== undefined ? streakData.currentDayOfWeek : new Date().getDay();
+                            const isToday = currentDayIndex === idx;
+                            const isActive = Boolean( streakData?.daysActiveThisWeek?.[idx] );
+                            return (
+                                <div key={idx} className="flex flex-col items-center space-y-1">
+                                    <span className={`text-[9px] font-semibold ${isToday ? "text-emerald-400" : "text-slate-500"}`}>
+                                        {dayLetter}
+                                    </span>
+                                    <div
+                                        className={`w-2 h-2 rounded-full transition-all ${
+                                            isActive
+                                                ? "bg-emerald-400 shadow-sm shadow-emerald-400/50"
+                                                : isToday
+                                                    ? "border border-emerald-400/60 bg-transparent"
+                                                    : "bg-slate-800"
+                                        }`}
+                                        title={isActive ? `Workout logged on day ${idx}` : isToday ? "Today" : ""}
+                                    />
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
                 <div className="col-span-2 sm:col-span-1 p-4 rounded-2xl bg-slate-900/60 border border-slate-800/70">

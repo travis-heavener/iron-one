@@ -1,7 +1,7 @@
 # IronOne Project Handoff & Session Transition Guide
 
 > **Target Audience:** Incoming AI coding agents and human developers resuming development on any device.
-> **Last Updated:** October 21, 2026 (v0.4.0: Introduction Walkthrough, Footer Branding & Version Milestone)
+> **Last Updated:** October 21, 2026 (v0.5.0: Weekly Consistency Streak Tracker & Global Theme Selector)
 
 ---
 
@@ -51,6 +51,15 @@
   - Interactive multi-slide onboarding walkthrough modal ([`OnboardingModal.jsx`](file:///home/travis/Documents/Projects/IronOne/client/src/components/OnboardingModal.jsx)) automatically welcoming new users and replayable anytime from the Dashboard and Profile pages.
   - Routine blueprint editor input ergonomics: enlarged tactile touch targets (~40px) with centered bold monospace typography while strictly preserving layout density.
   - Global application version and copyright notice footer across all authenticated screens and authentication gateways.
+- **Sub-Phase 6G (Weekly Consistency Streak & Global Theme Selector):**
+  - Weekly consistency streak calculation (`GET /api/workout-entries/streak`) tracking consecutive training weeks anchored to Sunday 12:00 AM with client timezone offset translation.
+  - Active vs Pending streak status indicators, 7-day Sun–Sat activity log dots, and all-time longest streak tracking.
+  - Dashboard metric snapshot integration replacing legacy units readout w/ tactile weekly streak card.
+  - Profile page streak summary and Sunday-to-Saturday log breakdown.
+  - Global Theme Selector on Profile page supporting 8 curated aesthetics (Iron Emerald, OLED Stealth, Crimson Forge, OLED Crimson, Electric Cobalt, OLED Cobalt, Cyber Violet, Amber Volt).
+  - True pitch-black AMOLED (#000000) mode for zero gym floor glare and battery savings.
+  - Zero-flash client theme persistence via `localStorage` and dynamic root CSS variable cascade.
+  - Resolved desktop horizontal scroll chevron overlay clipping across routine, catalog, and active workout pickers by converting filter chip containers to inline flex sibling layouts.
 
 ---
 

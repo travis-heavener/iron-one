@@ -481,6 +481,168 @@ export const getCalendarWorkouts = async ( req, res ) => {
     }
 };
 
+// Used to calculate weekly consistency streak and current week day log
+export const getWorkoutStreak = async ( req, res ) => {
+    const { timezoneOffset } = req.query;
+
+    const parsedOffsetMin = parseInt( timezoneOffset, 10 );
+    const offsetMs = !Number.isNaN( parsedOffsetMin ) ? parsedOffsetMin * 60 * 1000 : 0;
+
+    try {
+        const entries = await prisma.workoutEntry.findMany({
+            where: {
+                userId: req.user.id,
+                status: { not: "CANCELED" }
+            },
+            select: {
+                id: true,
+                date: true,
+                status: true
+            },
+            orderBy: { date: "desc" }
+        });
+
+        // Determine current local time and current week's Sunday 12:00 AM
+        const nowLocal = new Date( Date.now() - offsetMs );
+        const currentSundayLocal = new Date( nowLocal );
+        currentSundayLocal.setUTCHours( 0, 0, 0, 0 );
+        currentSundayLocal.setUTCDate( currentSundayLocal.getUTCDate() - currentSundayLocal.getUTCDay() );
+        const currentDayOfWeek = nowLocal.getUTCDay(); // 0 is Sunday, ..., 6 is Saturday
+
+        // Aggregate workouts into week keys (Sunday YYYY-MM-DD) and track day-of-week active set
+        const weekWorkoutCounts = {};
+        const weekDaysActive = {};
+
+        for ( let i = 0; i < entries.length; ++i ) {
+            const entryTime = entries[i].date instanceof Date ? entries[i].date.getTime() : new Date( entries[i].date ).getTime();
+            const entryLocal = new Date( entryTime - offsetMs );
+            const entrySunday = new Date( entryLocal );
+            entrySunday.setUTCHours( 0, 0, 0, 0 );
+            entrySunday.setUTCDate( entrySunday.getUTCDate() - entrySunday.getUTCDay() );
+
+            const y = entrySunday.getUTCFullYear();
+            const m = String( entrySunday.getUTCMonth() + 1 ).padStart( 2, "0" );
+            const d = String( entrySunday.getUTCDate() ).padStart( 2, "0" );
+            const weekKey = `${y}-${m}-${d}`;
+
+            weekWorkoutCounts[weekKey] = ( weekWorkoutCounts[weekKey] || 0 ) + 1;
+
+            if ( !weekDaysActive[weekKey] ) {
+                weekDaysActive[weekKey] = new Set();
+            }
+            weekDaysActive[weekKey].add( entryLocal.getUTCDay() );
+        }
+
+        // Current week statistics
+        const cy = currentSundayLocal.getUTCFullYear();
+        const cm = String( currentSundayLocal.getUTCMonth() + 1 ).padStart( 2, "0" );
+        const cd = String( currentSundayLocal.getUTCDate() ).padStart( 2, "0" );
+        const currentWeekKey = `${cy}-${cm}-${cd}`;
+
+        const thisWeekWorkouts = weekWorkoutCounts[currentWeekKey] || 0;
+        const hasWorkedOutThisWeek = thisWeekWorkouts > 0;
+        const currentWeekSet = weekDaysActive[currentWeekKey] || new Set();
+
+        const daysActiveThisWeek = [];
+        for ( let i = 0; i < 7; ++i ) {
+            daysActiveThisWeek.push( currentWeekSet.has( i ) );
+        }
+
+        // Calculate consecutive weekly streak (weeks starting Sunday 12:00 AM)
+        let currentStreak = 0;
+        let isPending = false;
+
+        if ( hasWorkedOutThisWeek ) {
+            let checkSunday = new Date( currentSundayLocal );
+            while ( currentStreak <= entries.length ) {
+                const sy = checkSunday.getUTCFullYear();
+                const sm = String( checkSunday.getUTCMonth() + 1 ).padStart( 2, "0" );
+                const sd = String( checkSunday.getUTCDate() ).padStart( 2, "0" );
+                const key = `${sy}-${sm}-${sd}`;
+
+                if ( ( weekWorkoutCounts[key] || 0 ) > 0 ) {
+                    ++currentStreak;
+                    checkSunday.setUTCDate( checkSunday.getUTCDate() - 7 );
+                } else {
+                    break;
+                }
+            }
+        } else {
+            const prevSunday = new Date( currentSundayLocal );
+            prevSunday.setUTCDate( prevSunday.getUTCDate() - 7 );
+
+            const py = prevSunday.getUTCFullYear();
+            const pm = String( prevSunday.getUTCMonth() + 1 ).padStart( 2, "0" );
+            const pd = String( prevSunday.getUTCDate() ).padStart( 2, "0" );
+            const prevKey = `${py}-${pm}-${pd}`;
+
+            if ( ( weekWorkoutCounts[prevKey] || 0 ) > 0 ) {
+                isPending = true;
+                let checkSunday = prevSunday;
+                while ( currentStreak <= entries.length ) {
+                    const sy = checkSunday.getUTCFullYear();
+                    const sm = String( checkSunday.getUTCMonth() + 1 ).padStart( 2, "0" );
+                    const sd = String( checkSunday.getUTCDate() ).padStart( 2, "0" );
+                    const key = `${sy}-${sm}-${sd}`;
+
+                    if ( ( weekWorkoutCounts[key] || 0 ) > 0 ) {
+                        ++currentStreak;
+                        checkSunday.setUTCDate( checkSunday.getUTCDate() - 7 );
+                    } else {
+                        break;
+                    }
+                }
+            } else {
+                currentStreak = 0;
+            }
+        }
+
+        // Calculate all-time longest weekly streak
+        let longestStreak = currentStreak;
+        const sortedWeekKeys = Object.keys( weekWorkoutCounts ).sort();
+
+        if ( sortedWeekKeys.length > 0 ) {
+            let run = 1;
+            let maxRun = 1;
+
+            for ( let i = 1; i < sortedWeekKeys.length; ++i ) {
+                const [ y1, m1, d1 ] = sortedWeekKeys[i - 1].split( "-" ).map( Number );
+                const [ y2, m2, d2 ] = sortedWeekKeys[i].split( "-" ).map( Number );
+                const date1 = new Date( Date.UTC( y1, m1 - 1, d1 ) );
+                const date2 = new Date( Date.UTC( y2, m2 - 1, d2 ) );
+                const diffDays = Math.round( ( date2 - date1 ) / ( 1000 * 60 * 60 * 24 ) );
+
+                if ( diffDays === 7 ) {
+                    ++run;
+                    if ( run > maxRun ) {
+                        maxRun = run;
+                    }
+                } else {
+                    run = 1;
+                }
+            }
+            longestStreak = Math.max( currentStreak, maxRun );
+        }
+
+        const weekStartDate = new Date( currentSundayLocal.getTime() + offsetMs ).toISOString();
+
+        return sendSuccess( res, {
+            currentDayOfWeek,
+            currentStreak,
+            daysActiveThisWeek,
+            hasWorkedOutThisWeek,
+            isPending,
+            longestStreak,
+            thisWeekWorkouts,
+            totalWorkouts: entries.length,
+            weekStartDate
+        });
+    } catch ( err ) {
+        console.error( "[Get Workout Streak Error]", err );
+        return sendError( res, "Failed to retrieve workout streak metrics", "ERR_FETCH_STREAK_FAILED", 500 );
+    }
+};
+
 // Used to retrieve full workout entry details by ID
 export const getWorkoutEntryById = async ( req, res ) => {
     const { id } = req.params;

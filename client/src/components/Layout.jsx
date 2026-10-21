@@ -32,7 +32,7 @@ export const Layout = ({ activeTab, children, onSelectTab }) => {
 
                 {/* Global Application Footer */}
                 <footer className="w-full text-center py-4 text-[11px] text-slate-500 font-medium select-none border-t border-slate-900/80 pb-[calc(var(--safe-area-bottom)+5.5rem)] md:pb-6">
-                    <p>© 2026 IronOne • v0.4.0</p>
+                    <p>© 2026 IronOne • v0.5.0</p>
                 </footer>
             </main>
         </div>
