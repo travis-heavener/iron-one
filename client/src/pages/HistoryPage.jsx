@@ -845,7 +845,14 @@ export const HistoryPage = ({ onNavigate }) => {
                         </div>
 
                         {/* Split Filter Chips */}
-                        <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none">
+                        <div
+                            onWheel={( e ) => {
+                                if ( e.deltaY !== 0 ) {
+                                    e.currentTarget.scrollLeft += e.deltaY;
+                                }
+                            }}
+                            className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none scroll-smooth"
+                        >
                             {SPLIT_FILTER_OPTIONS.map( ( split ) => (
                                 <button
                                     key={split}

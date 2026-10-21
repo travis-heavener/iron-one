@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.0] - 2026-10-21
+- Added: Desktop horizontal scroll chevrons and mouse wheel scrolling translation for category and filter chips
+- Added: Color-coded modality indicators (Emerald Weight & Reps, Sky Time Duration holds, Amber Distance & Time cardio)
+- Added: Non-destructive idempotent master exercise catalog sync with 17 new movements (74 total)
+- Added: Application footer displaying version and copyright notice across all authenticated views and auth gateways
+- Improved: Routine blueprint editor input ergonomics with larger tap targets and tactile numeric typography
+- Fixed: Desktop horizontal scrolling on routine editor exercise picker and live workout modals
+- Fixed: Ambiguity between isometric time duration holds and cardio distance/time across routines, logging, and catalog
+
 ## [0.2.0] - 2026-10-20
 - Added: Tactile live gym logger with micro-steppers for load, reps, and minutes
 - Added: Modality support for weight/reps, isometric duration, and distance/time with pace calculation

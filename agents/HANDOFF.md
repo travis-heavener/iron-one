@@ -1,7 +1,7 @@
 # IronOne Project Handoff & Session Transition Guide
 
 > **Target Audience:** Incoming AI coding agents and human developers resuming development on any device.
-> **Last Updated:** October 16, 2026 (Completion of Phase 6 & Generalized Backup Tool)
+> **Last Updated:** October 21, 2026 (v0.3.0: Catalog Synchronization, Modality Refinement & Desktop Ergonomics)
 
 ---
 
@@ -40,6 +40,13 @@
   - 1-tap "Clone to Today" action (`POST /api/workout-entries/:id/clone`) replicating previous exercises and sets as uncompleted target baselines for progressive overload.
   - Client-local timezone boundary shifting preventing evening workout clipping across timezones.
   - Dashboard integration ([`DashboardPage.jsx`](file:///home/travis/Documents/Projects/IronOne/client/src/pages/DashboardPage.jsx)) displaying recent session summaries and quick navigation.
+- **Sub-Phase 6E (UX Refinement, Modality Distinction & Catalog Synchronization):**
+  - Desktop horizontal navigation chevrons and mouse wheel scrolling translation (`onWheel`) across all chip sets (routine editor picker, live workout picker, swap modal, catalog categories/modalities, and history split filters).
+  - Explicit modality taxonomy: `WEIGHT_REPS` (Weight × Reps, Emerald), `TIME_DURATION` (Time Duration Holds, Sky), and `DISTANCE_TIME` (Distance & Time Cardio, Amber).
+  - Target value clarification across routine editor forms ("Target Hold / Duration *" vs "Target Distance & Pace *").
+  - Live workout table headers distinguishing hold durations from cardio distance and pace.
+  - Custom exercise modal equipped with descriptive cards detailing tracked metrics.
+  - Idempotent, non-destructive catalog sync script (`server/seeds/seed.js` via `npm run db:seed`) expanding master movements to 74 standard exercises without dropping tables or altering user data.
 
 ---
 

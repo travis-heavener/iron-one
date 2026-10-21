@@ -6,6 +6,8 @@
 import {
     Activity,
     Check,
+    ChevronLeft,
+    ChevronRight,
     Clock,
     Dumbbell,
     Filter,
@@ -15,7 +17,7 @@ import {
     Trash2,
     X
 } from "lucide-react";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { exerciseApi, workoutExerciseApi } from "../api/client.js";
@@ -39,8 +41,8 @@ const CATEGORIES = [
 const MODALITIES = [
     { label: "All Modalities", value: "" },
     { label: "Weight & Reps", value: "WEIGHT_REPS" },
-    { label: "Time Duration", value: "TIME_DURATION" },
-    { label: "Distance & Time", value: "DISTANCE_TIME" }
+    { label: "Time Duration (Holds)", value: "TIME_DURATION" },
+    { label: "Distance & Time (Cardio)", value: "DISTANCE_TIME" }
 ];
 
 // Equipment presets for custom exercise creation
@@ -82,6 +84,23 @@ export const ExercisesPage = ({ onNavigate }) => {
     const [ deletingId, setDeletingId ] = useState( null );
     const [ addingId, setAddingId ] = useState( null );
     const [ addedId, setAddedId ] = useState( null );
+
+    const categoryScrollRef = useRef( null );
+    const modalityScrollRef = useRef( null );
+
+    // Used to smoothly scroll horizontal chip containers on desktop button click
+    const handleScrollContainer = ( ref, direction ) => {
+        if ( ref.current ) {
+            ref.current.scrollBy({ left: direction * 160, behavior: "smooth" });
+        }
+    };
+
+    // Used to translate vertical mouse wheel into horizontal chip scrolling on desktop
+    const handleWheelHorizontal = ( e ) => {
+        if ( e.deltaY !== 0 ) {
+            e.currentTarget.scrollLeft += e.deltaY;
+        }
+    };
 
     // Lock body scroll while modal is open
     useEffect( () => {
@@ -300,41 +319,85 @@ export const ExercisesPage = ({ onNavigate }) => {
                 </div>
             </div>
 
-            {/* Muscle Category Filter Chips (Horizontal Scrolling on Mobile) */}
+            {/* Muscle Category Filter Chips (Desktop & Mobile Scrollable) */}
             <div className="space-y-2">
-                <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none">
-                    {CATEGORIES.map( ( cat ) => (
-                        <button
-                            key={cat}
-                            type="button"
-                            onClick={() => setSelectedCategory( cat )}
-                            className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition-colors duration-150 cursor-pointer ${
-                                selectedCategory === cat
-                                    ? "bg-slate-100 text-slate-950 border-slate-100 shadow-md"
-                                    : "bg-slate-900/90 text-slate-400 hover:text-slate-200 border-slate-800"
-                            }`}
-                        >
-                            {cat}
-                        </button>
-                    ) )}
+                <div className="relative flex items-center group">
+                    <button
+                        type="button"
+                        onClick={() => handleScrollContainer( categoryScrollRef, -1 )}
+                        className="hidden md:flex absolute -left-2 z-10 w-7 h-7 rounded-full bg-slate-800/95 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white items-center justify-center shadow-lg transition opacity-80 hover:opacity-100 cursor-pointer"
+                        aria-label="Scroll categories left"
+                    >
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <div
+                        ref={categoryScrollRef}
+                        onWheel={handleWheelHorizontal}
+                        className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none scroll-smooth w-full px-1"
+                    >
+                        {CATEGORIES.map( ( cat ) => (
+                            <button
+                                key={cat}
+                                type="button"
+                                onClick={() => setSelectedCategory( cat )}
+                                className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition-colors duration-150 cursor-pointer ${
+                                    selectedCategory === cat
+                                        ? "bg-slate-100 text-slate-950 border-slate-100 shadow-md"
+                                        : "bg-slate-900/90 text-slate-400 hover:text-slate-200 border-slate-800"
+                                }`}
+                            >
+                                {cat}
+                            </button>
+                        ) )}
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => handleScrollContainer( categoryScrollRef, 1 )}
+                        className="hidden md:flex absolute -right-2 z-10 w-7 h-7 rounded-full bg-slate-800/95 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white items-center justify-center shadow-lg transition opacity-80 hover:opacity-100 cursor-pointer"
+                        aria-label="Scroll categories right"
+                    >
+                        <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
                 </div>
 
                 {/* Modality Chips */}
-                <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none">
-                    {MODALITIES.map( ( m ) => (
-                        <button
-                            key={m.label}
-                            type="button"
-                            onClick={() => setSelectedModality( m.value )}
-                            className={`px-3 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition cursor-pointer ${
-                                selectedModality === m.value
-                                    ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/40"
-                                    : "bg-slate-900/50 text-slate-400 hover:text-slate-300 border border-slate-800/80"
-                            }`}
-                        >
-                            {m.label}
-                        </button>
-                    ) )}
+                <div className="relative flex items-center group">
+                    <button
+                        type="button"
+                        onClick={() => handleScrollContainer( modalityScrollRef, -1 )}
+                        className="hidden md:flex absolute -left-2 z-10 w-6 h-6 rounded-full bg-slate-800/95 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white items-center justify-center shadow-md transition opacity-80 hover:opacity-100 cursor-pointer"
+                        aria-label="Scroll modalities left"
+                    >
+                        <ChevronLeft className="w-3 h-3" />
+                    </button>
+                    <div
+                        ref={modalityScrollRef}
+                        onWheel={handleWheelHorizontal}
+                        className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none scroll-smooth w-full px-1"
+                    >
+                        {MODALITIES.map( ( m ) => (
+                            <button
+                                key={m.label}
+                                type="button"
+                                onClick={() => setSelectedModality( m.value )}
+                                className={`px-3 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition cursor-pointer ${
+                                    selectedModality === m.value
+                                        ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/40"
+                                        : "bg-slate-900/50 text-slate-400 hover:text-slate-300 border border-slate-800/80"
+                                }`}
+                            >
+                                {m.label}
+                            </button>
+                        ) )}
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => handleScrollContainer( modalityScrollRef, 1 )}
+                        className="hidden md:flex absolute -right-2 z-10 w-6 h-6 rounded-full bg-slate-800/95 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white items-center justify-center shadow-md transition opacity-80 hover:opacity-100 cursor-pointer"
+                        aria-label="Scroll modalities right"
+                    >
+                        <ChevronRight className="w-3 h-3" />
+                    </button>
                 </div>
             </div>
 
@@ -392,21 +455,22 @@ export const ExercisesPage = ({ onNavigate }) => {
                                     <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-950 text-slate-400 border border-slate-800">
                                         {ex.equipment}
                                     </span>
-                                    <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold text-emerald-400/90 flex items-center space-x-1">
-                                        {ex.modality === "TIME_DURATION" ? (
-                                            <>
-                                                <Clock className="w-3 h-3" />
-                                                <span>Time</span>
-                                            </>
-                                        ) : ex.modality === "DISTANCE_TIME" ? (
-                                            <>
-                                                <Activity className="w-3 h-3" />
-                                                <span>Cardio</span>
-                                            </>
-                                        ) : (
+                                    {ex.modality === "TIME_DURATION" ? (
+                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold text-sky-400 bg-sky-500/10 border border-sky-500/20 flex items-center space-x-1">
+                                            <Clock className="w-3 h-3 text-sky-400" />
+                                            <span>Time Duration (Hold)</span>
+                                        </span>
+                                    ) : ex.modality === "DISTANCE_TIME" ? (
+                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 flex items-center space-x-1">
+                                            <Activity className="w-3 h-3 text-amber-400" />
+                                            <span>Distance & Time (Cardio)</span>
+                                        </span>
+                                    ) : (
+                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold text-emerald-400/90 bg-emerald-500/10 border border-emerald-500/20 flex items-center space-x-1">
+                                            <Dumbbell className="w-3 h-3 text-emerald-400" />
                                             <span>Weight × Reps</span>
-                                        )}
-                                    </span>
+                                        </span>
+                                    )}
                                 </div>
                             </div>
 
@@ -553,19 +617,36 @@ export const ExercisesPage = ({ onNavigate }) => {
                                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
                                     Tracking Modality *
                                 </label>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {MODALITIES.filter( ( m ) => m.value !== "" ).map( ( m ) => (
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                    {[
+                                        {
+                                            value: "WEIGHT_REPS",
+                                            title: "Weight & Reps",
+                                            desc: "Lifting, barbells, dumbbells & machines"
+                                        },
+                                        {
+                                            value: "TIME_DURATION",
+                                            title: "Time Duration (Holds)",
+                                            desc: "Planks, wall sits & static timed rounds"
+                                        },
+                                        {
+                                            value: "DISTANCE_TIME",
+                                            title: "Distance & Time (Cardio)",
+                                            desc: "Running, rowing, cycling & pace tracking"
+                                        }
+                                    ].map( ( m ) => (
                                         <button
                                             key={m.value}
                                             type="button"
                                             onClick={() => setCustomModality( m.value )}
-                                            className={`p-2.5 rounded-xl text-xs font-bold border transition text-center cursor-pointer ${
+                                            className={`p-2.5 rounded-xl text-left border transition cursor-pointer flex flex-col justify-between ${
                                                 customModality === m.value
                                                     ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/50"
                                                     : "bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200"
                                             }`}
                                         >
-                                            {m.label}
+                                            <span className="text-xs font-bold text-white block mb-0.5">{m.title}</span>
+                                            <span className="text-[10px] text-slate-400 block">{m.desc}</span>
                                         </button>
                                     ) )}
                                 </div>

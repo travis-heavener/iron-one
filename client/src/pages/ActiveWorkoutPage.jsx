@@ -9,6 +9,8 @@ import {
     Check,
     CheckCircle2,
     ChevronDown,
+    ChevronLeft,
+    ChevronRight,
     ChevronUp,
     Clock,
     Dumbbell,
@@ -142,6 +144,23 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
     const [ swapCategory, setSwapCategory ] = useState( "All" );
     const [ swapKeepSets, setSwapKeepSets ] = useState( true );
     const [ swapping, setSwapping ] = useState( false );
+
+    const pickerCategoryScrollRef = useRef( null );
+    const swapCategoryScrollRef = useRef( null );
+
+    // Used to smoothly scroll horizontal chip containers on desktop button click
+    const handleScrollContainer = ( ref, direction ) => {
+        if ( ref.current ) {
+            ref.current.scrollBy({ left: direction * 160, behavior: "smooth" });
+        }
+    };
+
+    // Used to translate vertical mouse wheel into horizontal chip scrolling on desktop
+    const handleWheelHorizontal = ( e ) => {
+        if ( e.deltaY !== 0 ) {
+            e.currentTarget.scrollLeft += e.deltaY;
+        }
+    };
 
     // Debounce timers and actions map to throttle rapid stepper clicks and keystrokes
     const debounceTimers = useRef( {} );
@@ -1235,9 +1254,9 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
                                         </>
                                     ) : ex.modality === "TIME_DURATION" ? (
                                         isCardio ? (
-                                            <span className="flex-1 text-center">Duration (Minutes)</span>
+                                            <span className="flex-1 text-center">Time Duration (Minutes)</span>
                                         ) : (
-                                            <span className="flex-1 text-center">Duration (Seconds)</span>
+                                            <span className="flex-1 text-center">Hold Duration (Seconds)</span>
                                         )
                                     ) : (
                                         <>
@@ -1701,21 +1720,43 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
                                 />
                             </div>
 
-                            <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none">
-                                {PICKER_CATEGORIES.map( ( cat ) => (
-                                    <button
-                                        key={cat}
-                                        type="button"
-                                        onClick={() => setSwapCategory( cat )}
-                                        className={`px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition cursor-pointer ${
-                                            swapCategory === cat
-                                                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/50"
-                                                : "bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800"
-                                        }`}
-                                    >
-                                        {cat}
-                                    </button>
-                                ) )}
+                            <div className="relative flex items-center group">
+                                <button
+                                    type="button"
+                                    onClick={() => handleScrollContainer( swapCategoryScrollRef, -1 )}
+                                    className="hidden md:flex absolute -left-2 z-10 w-6 h-6 rounded-full bg-slate-800/95 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white items-center justify-center shadow-md transition opacity-80 hover:opacity-100 cursor-pointer"
+                                    aria-label="Scroll categories left"
+                                >
+                                    <ChevronLeft className="w-3.5 h-3.5" />
+                                </button>
+                                <div
+                                    ref={swapCategoryScrollRef}
+                                    onWheel={handleWheelHorizontal}
+                                    className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none scroll-smooth w-full px-1"
+                                >
+                                    {PICKER_CATEGORIES.map( ( cat ) => (
+                                        <button
+                                            key={cat}
+                                            type="button"
+                                            onClick={() => setSwapCategory( cat )}
+                                            className={`px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition cursor-pointer ${
+                                                swapCategory === cat
+                                                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/50"
+                                                    : "bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800"
+                                            }`}
+                                        >
+                                            {cat}
+                                        </button>
+                                    ) )}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => handleScrollContainer( swapCategoryScrollRef, 1 )}
+                                    className="hidden md:flex absolute -right-2 z-10 w-6 h-6 rounded-full bg-slate-800/95 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white items-center justify-center shadow-md transition opacity-80 hover:opacity-100 cursor-pointer"
+                                    aria-label="Scroll categories right"
+                                >
+                                    <ChevronRight className="w-3.5 h-3.5" />
+                                </button>
                             </div>
                         </div>
 
@@ -1801,21 +1842,43 @@ export const ActiveWorkoutPage = ({ onNavigate }) => {
                                 />
                             </div>
 
-                            <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none">
-                                {PICKER_CATEGORIES.map( ( cat ) => (
-                                    <button
-                                        key={cat}
-                                        type="button"
-                                        onClick={() => setPickerCategory( cat )}
-                                        className={`px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition cursor-pointer ${
-                                            pickerCategory === cat
-                                                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/50"
-                                                : "bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800"
-                                        }`}
-                                    >
-                                        {cat}
-                                    </button>
-                                ) )}
+                            <div className="relative flex items-center group">
+                                <button
+                                    type="button"
+                                    onClick={() => handleScrollContainer( pickerCategoryScrollRef, -1 )}
+                                    className="hidden md:flex absolute -left-2 z-10 w-6 h-6 rounded-full bg-slate-800/95 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white items-center justify-center shadow-md transition opacity-80 hover:opacity-100 cursor-pointer"
+                                    aria-label="Scroll categories left"
+                                >
+                                    <ChevronLeft className="w-3.5 h-3.5" />
+                                </button>
+                                <div
+                                    ref={pickerCategoryScrollRef}
+                                    onWheel={handleWheelHorizontal}
+                                    className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none scroll-smooth w-full px-1"
+                                >
+                                    {PICKER_CATEGORIES.map( ( cat ) => (
+                                        <button
+                                            key={cat}
+                                            type="button"
+                                            onClick={() => setPickerCategory( cat )}
+                                            className={`px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition cursor-pointer ${
+                                                pickerCategory === cat
+                                                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/50"
+                                                    : "bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800"
+                                            }`}
+                                        >
+                                            {cat}
+                                        </button>
+                                    ) )}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => handleScrollContainer( pickerCategoryScrollRef, 1 )}
+                                    className="hidden md:flex absolute -right-2 z-10 w-6 h-6 rounded-full bg-slate-800/95 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white items-center justify-center shadow-md transition opacity-80 hover:opacity-100 cursor-pointer"
+                                    aria-label="Scroll categories right"
+                                >
+                                    <ChevronRight className="w-3.5 h-3.5" />
+                                </button>
                             </div>
                         </div>
 

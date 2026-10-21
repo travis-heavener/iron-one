@@ -130,12 +130,17 @@ export const LoginPage = ({ onSwitchToRegister }) => {
                             <button
                                 type="button"
                                 onClick={onSwitchToRegister}
-                                className="font-semibold text-emerald-400 hover:text-emerald-300 transition ml-1"
+                                className="font-semibold text-emerald-400 hover:text-emerald-300 transition ml-1 cursor-pointer"
                             >
                                 Register now
                             </button>
                         </p>
                     </div>
+                </div>
+
+                {/* Application Version & Copyright Footer */}
+                <div className="text-center text-[11px] text-slate-600 font-medium select-none">
+                    <p>© 2026 IronOne • v0.3.0</p>
                 </div>
             </div>
         </div>

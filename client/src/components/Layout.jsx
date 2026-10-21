@@ -25,10 +25,15 @@ export const Layout = ({ activeTab, children, onSelectTab }) => {
             )}
 
             {/* Main view container w/ full-width scrollbar aligned to window edge */}
-            <main className="flex-1 w-full overflow-y-auto overscroll-y-contain">
-                <div className="w-full max-w-7xl mx-auto px-4 md:px-6 pt-4 pb-28 md:pb-12">
+            <main className="flex-1 w-full overflow-y-auto overscroll-y-contain flex flex-col justify-between">
+                <div className="w-full max-w-7xl mx-auto px-4 md:px-6 pt-4 pb-6 flex-1">
                     {children}
                 </div>
+
+                {/* Global Application Footer */}
+                <footer className="w-full text-center py-4 text-[11px] text-slate-500 font-medium select-none border-t border-slate-900/80 pb-[calc(var(--safe-area-bottom)+5.5rem)] md:pb-6">
+                    <p>© 2026 IronOne • v0.3.0</p>
+                </footer>
             </main>
         </div>
     );

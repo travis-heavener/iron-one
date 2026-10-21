@@ -20,7 +20,7 @@ This project is also an experiment in pure agentic pair programming—designed a
   - **Routines (Templates)**: Reusable split templates (e.g., *Push Day A*) that can be copied, customized, or started in one click. Editing a template never alters past workout logs.
   - **Workout Entries (Logs)**: Daily session logs supporting multiple entries per day or spontaneous freeform tracking without a routine.
 - 🔄 **Progressive Overload Tracking**: Clone past workouts to today's date with previous weights and reps carried over as baseline targets to match or beat.
-- 🏋️‍♂️ **Multi-Modal Exercises**: Log traditional weight & reps, isometric holds/time (e.g., 60-second planks), or distance & cardio with pace metrics.
+- 🏋️‍♂️ **Multi-Modal Exercises**: Log traditional weight & reps, isometric holds (e.g., planks, wall sits in seconds/minutes), or distance & cardio with automatic pace calculation (e.g., running, rowing, cycling in min/mi or min/km).
 - 🛡️ **Gym Network Resilience**: Local client storage shields in-progress sessions, ensuring zero data loss if cellular connection drops in basement gyms over Tailscale.
 - 📅 **Dual Views**: Visual monthly calendar split badges alongside a detailed chronological journal stream.
 - 🔒 **Private & Secure**: Standalone local SQLite database, Argon2id memory-hard password hashing, and network-level Tailscale isolation.
@@ -84,12 +84,12 @@ DATABASE_URL="file:./ironone.db"
 ```
 
 ### 5. Initialize the Database
-Run Prisma migrations to create the SQLite database schema with WAL mode enabled, generate the Prisma client bindings, and seed the master exercise catalog (57 standard movements across all modalities):
+Run Prisma migrations to create the SQLite database schema with WAL mode enabled, generate the Prisma client bindings, and synchronize the master exercise catalog (74 standard movements across all modalities):
 ```bash
 # Apply schema migrations and generate Prisma client
 npm run db:migrate
 
-# Seed the master exercise catalog
+# Synchronize the master exercise catalog
 npm run db:seed
 ```
 
@@ -125,7 +125,7 @@ When actively developing or adding features:
 | `npm run build` | Compiles frontend production bundle into `client/dist/` |
 | `npm run db:migrate` | Applies Prisma migrations to `ironone.db` |
 | `npm run db:generate` | Regenerates Prisma client bindings if `schema.prisma` is modified |
-| `npm run db:seed` | Populates database with default exercise movements |
+| `npm run db:seed` | Safely synchronizes master exercise catalog (idempotent upsert; non-destructive) |
 | `npm run db:studio` | Launches visual Prisma Studio GUI on port `5555` to inspect data |
 
 ---

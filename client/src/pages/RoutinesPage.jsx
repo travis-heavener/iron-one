@@ -8,6 +8,8 @@ import {
     ArrowDown,
     ArrowUp,
     Check,
+    ChevronLeft,
+    ChevronRight,
     Copy,
     Dumbbell,
     Edit2,
@@ -79,6 +81,22 @@ export const RoutinesPage = ({ onNavigate }) => {
 
     const nameInputRef = useRef( null );
     const editorScrollRef = useRef( null );
+    const splitTagScrollRef = useRef( null );
+    const pickerCategoryScrollRef = useRef( null );
+
+    // Used to smoothly scroll horizontal chip containers on desktop button click
+    const handleScrollContainer = ( ref, direction ) => {
+        if ( ref.current ) {
+            ref.current.scrollBy({ left: direction * 160, behavior: "smooth" });
+        }
+    };
+
+    // Used to translate vertical mouse wheel into horizontal chip scrolling on desktop
+    const handleWheelHorizontal = ( e ) => {
+        if ( e.deltaY !== 0 ) {
+            e.currentTarget.scrollLeft += e.deltaY;
+        }
+    };
 
     // Exercise Picker Modal State (Inside Editor)
     const [ isPickerOpen, setIsPickerOpen ] = useState( false );
@@ -507,21 +525,43 @@ export const RoutinesPage = ({ onNavigate }) => {
                 </div>
 
                 {/* Split Tag Filter Chips */}
-                <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none">
-                    {[ "All", ...SPLIT_PRESETS ].map( ( tag ) => (
-                        <button
-                            key={tag}
-                            type="button"
-                            onClick={() => setSelectedSplit( tag )}
-                            className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition-colors duration-150 cursor-pointer ${
-                                selectedSplit === tag
-                                    ? "bg-slate-100 text-slate-950 border-slate-100 shadow-md"
-                                    : "bg-slate-900/90 text-slate-400 hover:text-slate-200 border-slate-800"
-                            }`}
-                        >
-                            {tag}
-                        </button>
-                    ) )}
+                <div className="relative flex items-center group">
+                    <button
+                        type="button"
+                        onClick={() => handleScrollContainer( splitTagScrollRef, -1 )}
+                        className="hidden md:flex absolute -left-2 z-10 w-7 h-7 rounded-full bg-slate-800/95 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white items-center justify-center shadow-lg transition opacity-80 hover:opacity-100 cursor-pointer"
+                        aria-label="Scroll split filters left"
+                    >
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <div
+                        ref={splitTagScrollRef}
+                        onWheel={handleWheelHorizontal}
+                        className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none scroll-smooth w-full px-1"
+                    >
+                        {[ "All", ...SPLIT_PRESETS ].map( ( tag ) => (
+                            <button
+                                key={tag}
+                                type="button"
+                                onClick={() => setSelectedSplit( tag )}
+                                className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition-colors duration-150 cursor-pointer ${
+                                    selectedSplit === tag
+                                        ? "bg-slate-100 text-slate-950 border-slate-100 shadow-md"
+                                        : "bg-slate-900/90 text-slate-400 hover:text-slate-200 border-slate-800"
+                                }`}
+                            >
+                                {tag}
+                            </button>
+                        ) )}
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => handleScrollContainer( splitTagScrollRef, 1 )}
+                        className="hidden md:flex absolute -right-2 z-10 w-7 h-7 rounded-full bg-slate-800/95 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white items-center justify-center shadow-lg transition opacity-80 hover:opacity-100 cursor-pointer"
+                        aria-label="Scroll split filters right"
+                    >
+                        <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
                 </div>
             </div>
 
@@ -885,7 +925,7 @@ export const RoutinesPage = ({ onNavigate }) => {
                                                 {item.modality === "WEIGHT_REPS" ? (
                                                     <div className="grid grid-cols-3 gap-2.5">
                                                         <div>
-                                                            <label className="block text-[10px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">
+                                                            <label className="block text-[11px] font-bold text-slate-300 mb-1 uppercase tracking-wider text-center sm:text-left">
                                                                 Target Sets *
                                                             </label>
                                                             <input
@@ -901,12 +941,12 @@ export const RoutinesPage = ({ onNavigate }) => {
                                                                         handleUpdateFormExercise( index, "targetSets", 3 );
                                                                     }
                                                                 }}
-                                                                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white text-xs font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                                                className="w-full px-3 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-slate-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 shadow-inner text-white text-sm sm:text-base font-bold font-mono text-center focus:outline-none transition"
                                                             />
                                                         </div>
 
                                                         <div>
-                                                            <label className="block text-[10px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">
+                                                            <label className="block text-[11px] font-bold text-slate-300 mb-1 uppercase tracking-wider text-center sm:text-left">
                                                                 Target Reps *
                                                             </label>
                                                             <input
@@ -923,13 +963,13 @@ export const RoutinesPage = ({ onNavigate }) => {
                                                                     }
                                                                 }}
                                                                 placeholder="10"
-                                                                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white text-xs font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                                                className="w-full px-3 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-slate-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 shadow-inner text-white text-sm sm:text-base font-bold font-mono text-center focus:outline-none transition"
                                                             />
                                                         </div>
 
                                                         <div>
-                                                            <label className="block text-[10px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">
-                                                                Target Weight
+                                                            <label className="block text-[11px] font-bold text-slate-300 mb-1 uppercase tracking-wider text-center sm:text-left truncate">
+                                                                Weight
                                                             </label>
                                                             <input
                                                                 type="number"
@@ -938,14 +978,14 @@ export const RoutinesPage = ({ onNavigate }) => {
                                                                 value={item.targetWeight}
                                                                 onChange={( e ) => handleUpdateFormExercise( index, "targetWeight", e.target.value )}
                                                                 placeholder="Optional"
-                                                                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white text-xs font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                                                className="w-full px-3 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-slate-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 shadow-inner text-white placeholder-slate-500 text-sm sm:text-base font-bold font-mono text-center focus:outline-none transition"
                                                             />
                                                         </div>
                                                     </div>
                                                 ) : item.modality === "TIME_DURATION" ? (
                                                     <div className="grid grid-cols-2 gap-2.5">
                                                         <div>
-                                                            <label className="block text-[10px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">
+                                                            <label className="block text-[11px] font-bold text-slate-300 mb-1 uppercase tracking-wider text-center sm:text-left">
                                                                 Target Sets / Rounds *
                                                             </label>
                                                             <input
@@ -961,27 +1001,27 @@ export const RoutinesPage = ({ onNavigate }) => {
                                                                         handleUpdateFormExercise( index, "targetSets", 3 );
                                                                     }
                                                                 }}
-                                                                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white text-xs font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                                                className="w-full px-3 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-slate-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 shadow-inner text-white text-sm sm:text-base font-bold font-mono text-center focus:outline-none transition"
                                                             />
                                                         </div>
 
                                                         <div>
-                                                            <label className="block text-[10px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">
-                                                                Target Duration *
+                                                            <label className="block text-[11px] font-bold text-slate-300 mb-1 uppercase tracking-wider">
+                                                                Target Hold / Duration *
                                                             </label>
                                                             <input
                                                                 type="text"
                                                                 value={item.targetValue}
                                                                 onChange={( e ) => handleUpdateFormExercise( index, "targetValue", e.target.value )}
-                                                                placeholder="e.g. 60s or 5m"
-                                                                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white text-xs font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                                                placeholder="e.g. 60s, 90s, or 3m"
+                                                                className="w-full px-3 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-slate-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 shadow-inner text-white placeholder-slate-500 text-sm sm:text-base font-semibold font-mono focus:outline-none transition"
                                                             />
                                                         </div>
                                                     </div>
                                                 ) : (
                                                     <div className="grid grid-cols-2 gap-2.5">
                                                         <div>
-                                                            <label className="block text-[10px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">
+                                                            <label className="block text-[11px] font-bold text-slate-300 mb-1 uppercase tracking-wider text-center sm:text-left">
                                                                 Target Sets / Intervals *
                                                             </label>
                                                             <input
@@ -997,20 +1037,20 @@ export const RoutinesPage = ({ onNavigate }) => {
                                                                         handleUpdateFormExercise( index, "targetSets", 1 );
                                                                     }
                                                                 }}
-                                                                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white text-xs font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                                                className="w-full px-3 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-slate-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 shadow-inner text-white text-sm sm:text-base font-bold font-mono text-center focus:outline-none transition"
                                                             />
                                                         </div>
 
                                                         <div>
-                                                            <label className="block text-[10px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">
-                                                                Target Distance or Time *
+                                                            <label className="block text-[11px] font-bold text-slate-300 mb-1 uppercase tracking-wider">
+                                                                Target Distance & Pace *
                                                             </label>
                                                             <input
                                                                 type="text"
                                                                 value={item.targetValue}
                                                                 onChange={( e ) => handleUpdateFormExercise( index, "targetValue", e.target.value )}
                                                                 placeholder="e.g. 5 km, 3 mi, or 30 min"
-                                                                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white text-xs font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                                                className="w-full px-3 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-slate-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 shadow-inner text-white placeholder-slate-500 text-sm sm:text-base font-semibold font-mono focus:outline-none transition"
                                                             />
                                                         </div>
                                                     </div>
@@ -1083,21 +1123,43 @@ export const RoutinesPage = ({ onNavigate }) => {
                                 />
                             </div>
 
-                            <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none">
-                                {PICKER_CATEGORIES.map( ( cat ) => (
-                                    <button
-                                        key={cat}
-                                        type="button"
-                                        onClick={() => setPickerCategory( cat )}
-                                        className={`px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition cursor-pointer ${
-                                            pickerCategory === cat
-                                                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/50"
-                                                : "bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800"
-                                        }`}
-                                    >
-                                        {cat}
-                                    </button>
-                                ) )}
+                            <div className="relative flex items-center group">
+                                <button
+                                    type="button"
+                                    onClick={() => handleScrollContainer( pickerCategoryScrollRef, -1 )}
+                                    className="hidden md:flex absolute -left-2 z-10 w-6 h-6 rounded-full bg-slate-800/95 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white items-center justify-center shadow-md transition opacity-80 hover:opacity-100 cursor-pointer"
+                                    aria-label="Scroll categories left"
+                                >
+                                    <ChevronLeft className="w-3.5 h-3.5" />
+                                </button>
+                                <div
+                                    ref={pickerCategoryScrollRef}
+                                    onWheel={handleWheelHorizontal}
+                                    className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none scroll-smooth w-full px-1"
+                                >
+                                    {PICKER_CATEGORIES.map( ( cat ) => (
+                                        <button
+                                            key={cat}
+                                            type="button"
+                                            onClick={() => setPickerCategory( cat )}
+                                            className={`px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition cursor-pointer ${
+                                                pickerCategory === cat
+                                                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/50"
+                                                    : "bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800"
+                                            }`}
+                                        >
+                                            {cat}
+                                        </button>
+                                    ) )}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => handleScrollContainer( pickerCategoryScrollRef, 1 )}
+                                    className="hidden md:flex absolute -right-2 z-10 w-6 h-6 rounded-full bg-slate-800/95 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white items-center justify-center shadow-md transition opacity-80 hover:opacity-100 cursor-pointer"
+                                    aria-label="Scroll categories right"
+                                >
+                                    <ChevronRight className="w-3.5 h-3.5" />
+                                </button>
                             </div>
                         </div>
 
